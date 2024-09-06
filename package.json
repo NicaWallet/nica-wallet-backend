@@ -7,11 +7,17 @@
   "license": "UNLICENSED",
   "scripts": {
     "build": "nest build",
-    "heroku-postbuild": "npm run build",
-    "start": "node dist/main",
+    "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
+    "start": "nest start",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
-    "start:prod": "node dist/main.js"
+    "start:prod": "node dist/main.js",
+    "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:cov": "jest --coverage",
+    "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
+    "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
     "@nestjs/common": "^10.0.0",
@@ -20,6 +26,9 @@
     "@nestjs/platform-express": "^10.0.0",
     "@nestjs/swagger": "^7.4.0",
     "@prisma/client": "^5.19.1",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.1",
+    "dotenv": "^16.4.5",
     "nica-wallet-backend": "file:",
     "reflect-metadata": "^0.2.0",
     "rxjs": "^7.8.1",
@@ -66,12 +75,10 @@
     "coverageDirectory": "../coverage",
     "testEnvironment": "node"
   },
-  "main": ".eslintrc.js",
-  "directories": {
-    "test": "test"
-  },
-  "keywords": [],
   "prisma": {
     "seed": "ts-node prisma/seed.ts"
+  },
+  "engines": {
+    "node": "20.x"
   }
 }
