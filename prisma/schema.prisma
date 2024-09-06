@@ -1,0 +1,302 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  user_id        Int       @id @default(autoincrement())
+  first_name     String
+  middle_name    String?
+  first_surname  String
+  second_surname String
+  email          String    @unique
+  phone_number   String?
+  birthdate      DateTime?
+  created_at     DateTime  @default(now())
+  updated_at     DateTime  @updatedAt
+
+  // Relations
+  addresses             Address[]
+  billingInfos          BillingInfo[]
+  bankDetails           BankDetails[]
+  budgets               Budget[]
+  goals                 Goal[]
+  incomes               Income[]
+  recurringTransactions RecurringTransactions[]
+  transactions          Transaction[]
+  userConnectionLogs    UserConnectionLog[]
+  userChangeHistories   UserChangeHistory[]
+  notifications         Notification[]
+  preferences           Preference[]
+  userRoles             UserRole[]
+
+  Category Category[]
+}
+
+model Address {
+  address_id   Int      @id @default(autoincrement())
+  user_id      Int?
+  street       String
+  city         String
+  state        String
+  postal_code  String
+  country      String
+  address_type String
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+
+  // Relaciones
+  user        User?         @relation(fields: [user_id], references: [user_id])
+  BillingInfo BillingInfo[]
+}
+
+model BillingInfo {
+  billing_id         Int      @id @default(autoincrement())
+  user_id            Int
+  credit_card_number String
+  billing_address_id Int
+  created_at         DateTime @default(now())
+  updated_at         DateTime @updatedAt
+
+  // Relaciones
+  user           User    @relation(fields: [user_id], references: [user_id])
+  billingAddress Address @relation(fields: [billing_address_id], references: [address_id])
+}
+
+model BankDetails {
+  bank_id        Int      @id @default(autoincrement())
+  user_id        Int
+  account_number String
+  bank_name      String
+  account_type   String
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [user_id], references: [user_id])
+}
+
+model Budget {
+  budget_id   Int      @id @default(autoincrement())
+  user_id     Int
+  category_id Int
+  amount      Float
+  start_date  DateTime
+  end_date    DateTime
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  // Relations
+  user     User     @relation(fields: [user_id], references: [user_id])
+  category Category @relation(fields: [category_id], references: [category_id])
+}
+
+model Goal {
+  goal_id        Int      @id @default(autoincrement())
+  user_id        Int
+  description    String
+  target_amount  Float
+  current_amount Float
+  deadline       DateTime
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [user_id], references: [user_id])
+}
+
+model Income {
+  income_id  Int      @id @default(autoincrement())
+  user_id    Int
+  amount     Float
+  source     String
+  date       DateTime
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [user_id], references: [user_id])
+}
+
+model RecurringTransactions {
+  recurring_transaction_id Int      @id @default(autoincrement())
+  user_id                  Int
+  amount                   Float
+  frequency                String
+  start_date               DateTime
+  end_date                 DateTime
+  created_at               DateTime @default(now())
+  updated_at               DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [user_id], references: [user_id])
+}
+
+model UserConnectionLog {
+  connection_id Int      @id @default(autoincrement())
+  user_id       Int
+  login_time    DateTime
+  logout_time   DateTime
+  ip_address    String
+  device_info   String
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [user_id], references: [user_id])
+}
+
+model UserChangeHistory {
+  change_id          Int      @id @default(autoincrement())
+  user_id            Int
+  change_date        DateTime
+  change_type        String
+  change_description String
+  created_at         DateTime @default(now())
+  updated_at         DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [user_id], references: [user_id])
+}
+
+model Notification {
+  notification_id Int      @id @default(autoincrement())
+  user_id         Int
+  message         String
+  date_sent       DateTime
+  status          String
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [user_id], references: [user_id])
+}
+
+model Preference {
+  preference_id    Int      @id @default(autoincrement())
+  user_id          Int
+  preference_type  String
+  preference_value String
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [user_id], references: [user_id])
+}
+
+model Role {
+  role_id    Int      @id @default(autoincrement())
+  role_name  String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  // Relations
+  userRoles       UserRole[]
+  rolePermissions RolePermission[]
+}
+
+model Permission {
+  permission_id   Int      @id @default(autoincrement())
+  permission_name String
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+
+  // Relations
+  rolePermissions RolePermission[]
+}
+
+model UserRole {
+  user_id    Int
+  role_id    Int
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [user_id], references: [user_id])
+  role Role @relation(fields: [role_id], references: [role_id])
+
+  @@id([user_id, role_id])
+}
+
+model RolePermission {
+  role_id       Int
+  permission_id Int
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  // Relations
+  role       Role       @relation(fields: [role_id], references: [role_id])
+  permission Permission @relation(fields: [permission_id], references: [permission_id])
+
+  @@id([role_id, permission_id])
+}
+
+model Transaction {
+  transaction_id    Int      @id @default(autoincrement())
+  user_id           Int
+  category_id       Int
+  subcategory_id    Int
+  classification_id Int
+  amount            Float
+  date              DateTime
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+
+  // Relations
+  user           User           @relation(fields: [user_id], references: [user_id])
+  category       Category       @relation(fields: [category_id], references: [category_id])
+  subcategory    Subcategory    @relation(fields: [subcategory_id], references: [subcategory_id])
+  classification Classification @relation(fields: [classification_id], references: [classification_id])
+  histories      History[]
+}
+
+model Category {
+  category_id Int      @id @default(autoincrement())
+  name        String
+  user_id     Int
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  // Relations
+  user          User          @relation(fields: [user_id], references: [user_id])
+  subcategories Subcategory[]
+  Budget        Budget[]
+  Transaction   Transaction[]
+}
+
+model Subcategory {
+  subcategory_id Int      @id @default(autoincrement())
+  name           String
+  category_id    Int
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+
+  // Relations
+  category    Category      @relation(fields: [category_id], references: [category_id])
+  Transaction Transaction[]
+}
+
+model Classification {
+  classification_id Int           @id @default(autoincrement())
+  name              String
+  created_at        DateTime      @default(now())
+  updated_at        DateTime      @updatedAt
+  Transaction       Transaction[]
+}
+
+model History {
+  history_id     Int      @id @default(autoincrement())
+  transaction_id Int
+  change_date    DateTime
+  old_value      String
+  new_value      String
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+
+  // Relations
+  transaction Transaction @relation(fields: [transaction_id], references: [transaction_id])
+}
