@@ -1,1 +1,1 @@
-web: npm run start
+web: npm install --only=prod && npm run start
