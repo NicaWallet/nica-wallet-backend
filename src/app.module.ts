@@ -21,6 +21,11 @@ import { SubcategoryModule } from './subcategory/subcategory.module';
 import { UserChangeHistoryModule } from './user-change-history/user-change-history.module';
 import { UserConnectionLogModule } from './user-connection-log/user-connection-log.module';
 import { UserRoleModule } from './user-role/user-role.module';
+import { AuthModule } from './auth/auth.module';
+import { MailModule } from './mail/mail.module';
+import { PreferenceModule } from './preference/preference.module';
+import { HistoryModule } from './history/history.module';
+import { LoggingModule } from './logging/logging.module';
 
 @Module({
   imports: [
@@ -44,6 +49,11 @@ import { UserRoleModule } from './user-role/user-role.module';
     UserChangeHistoryModule,
     UserConnectionLogModule,
     UserRoleModule,
+    AuthModule,
+    MailModule,
+    PreferenceModule,
+    HistoryModule,
+    LoggingModule,
   ],
   controllers: [AppController],
   providers: [AppService],
