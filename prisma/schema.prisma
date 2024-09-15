@@ -13,7 +13,7 @@ model User {
   first_name     String
   middle_name    String?
   first_surname  String
-  second_surname String
+  second_surname String?
   email          String    @unique
   phone_number   String?
   birthdate      DateTime?
