@@ -1,17 +1,24 @@
 import { PrismaClient } from '@prisma/client';
+import * as bcrypt from 'bcrypt';
+
 const prisma = new PrismaClient();
 
 async function main() {
+    // Hashear la contraseña para ambos usuarios
+    const adminHashedPassword = await bcrypt.hash('1234', 10);
+    const guestHashedPassword = await bcrypt.hash('password', 10);
+
     // Crear usuarios
-    const user1 = await prisma.user.create({
+    const adminUser = await prisma.user.create({
         data: {
-            first_name: 'John',
+            first_name: 'Admin',
             middle_name: 'A.',
-            first_surname: 'Doe',
-            second_surname: 'Smith',
-            email: 'john.doe@example.com',
+            first_surname: 'Test',
+            second_surname: 'User',
+            email: 'admin@example.com',
             phone_number: '123-456-7890',
             birthdate: new Date('1985-05-15'),
+            password: adminHashedPassword,
             addresses: {
                 create: [{
                     street: '123 Main St',
@@ -40,16 +47,16 @@ async function main() {
         },
     });
 
-
-    const user2 = await prisma.user.create({
+    const guestUser = await prisma.user.create({
         data: {
-            first_name: 'Jane',
+            first_name: 'Guest',
             middle_name: 'B.',
-            first_surname: 'Doe',
-            second_surname: 'Johnson',
-            email: 'jane.doe@example.com',
+            first_surname: 'Test',
+            second_surname: 'User',
+            email: 'guest@example.com',
             phone_number: '987-654-3210',
             birthdate: new Date('1990-08-25'),
+            password: guestHashedPassword,
             addresses: {
                 create: {
                     street: '789 Oak St',
@@ -70,17 +77,17 @@ async function main() {
         },
     });
 
-    const userRole = await prisma.role.create({
+    const guestRole = await prisma.role.create({
         data: {
-            role_name: 'User',
+            role_name: 'Guest',
         },
     });
 
     // Asignar roles a los usuarios
     await prisma.userRole.createMany({
         data: [
-            { user_id: user1.user_id, role_id: adminRole.role_id },
-            { user_id: user2.user_id, role_id: userRole.role_id },
+            { user_id: adminUser.user_id, role_id: adminRole.role_id },
+            { user_id: guestUser.user_id, role_id: guestRole.role_id },
         ],
     });
 
@@ -88,14 +95,14 @@ async function main() {
     const category1 = await prisma.category.create({
         data: {
             name: 'Groceries',
-            user: { connect: { user_id: user1.user_id } },
+            user: { connect: { user_id: adminUser.user_id } },
         },
     });
 
     const category2 = await prisma.category.create({
         data: {
             name: 'Entertainment',
-            user: { connect: { user_id: user1.user_id } },
+            user: { connect: { user_id: adminUser.user_id } },
         },
     });
 
@@ -133,7 +140,7 @@ async function main() {
             {
                 amount: 150.0,
                 date: new Date('2024-09-01'),
-                user_id: user1.user_id,
+                user_id: adminUser.user_id,
                 category_id: category1.category_id,
                 subcategory_id: subcategory1.subcategory_id,
                 classification_id: classification1.classification_id,
@@ -141,7 +148,7 @@ async function main() {
             {
                 amount: 50.0,
                 date: new Date('2024-09-02'),
-                user_id: user1.user_id,
+                user_id: adminUser.user_id,
                 category_id: category2.category_id,
                 subcategory_id: subcategory2.subcategory_id,
                 classification_id: classification2.classification_id,
@@ -155,7 +162,7 @@ async function main() {
             amount: 3000.0,
             source: 'Salary',
             date: new Date('2024-09-01'),
-            user: { connect: { user_id: user1.user_id } },
+            user: { connect: { user_id: adminUser.user_id } },
         },
     });
 
@@ -166,7 +173,7 @@ async function main() {
             target_amount: 1000.0,
             current_amount: 200.0,
             deadline: new Date('2024-12-01'),
-            user: { connect: { user_id: user1.user_id } },
+            user: { connect: { user_id: adminUser.user_id } },
         },
     });
 
@@ -176,7 +183,7 @@ async function main() {
             amount: 500.0,
             start_date: new Date('2024-09-01'),
             end_date: new Date('2024-09-30'),
-            user: { connect: { user_id: user1.user_id } },
+            user: { connect: { user_id: adminUser.user_id } },
             category: { connect: { category_id: category1.category_id } },
         },
     });

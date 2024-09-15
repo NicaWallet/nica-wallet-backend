@@ -3,8 +3,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider          = "postgresql"
+  url               = env("DATABASE_URL") // Esta es la base de datos de Heroku
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL") // Shadow database para pruebas
 }
 
 model User {
@@ -16,10 +17,11 @@ model User {
   email          String    @unique
   phone_number   String?
   birthdate      DateTime?
+  password       String?
   created_at     DateTime  @default(now())
   updated_at     DateTime  @updatedAt
 
-  // Relations
+  // Relaciones
   addresses             Address[]
   billingInfos          BillingInfo[]
   bankDetails           BankDetails[]
