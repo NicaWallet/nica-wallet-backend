@@ -2,6 +2,7 @@ import { Body, Controller, Post } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
+import { CreateUserDto } from './dto/register.dto';
 
 @ApiTags('Authentication')
 @Controller('auth')
@@ -16,12 +17,13 @@ export class AuthController {
     }
 
     // TODO: Implementar metodo de registro
-    // @Post('register')
-    // @ApiOperation({ summary: 'User registration' })
-    // @ApiResponse({ status: 201, description: 'Registration successful.' })
-    // async register(@Body() registerDto: RegisterDto) {
-    //     return this.authService.register(registerDto);
-    // }
+    @Post('register')
+    @ApiOperation({ summary: 'Register a new user' })
+    @ApiResponse({ status: 201, description: 'User registered successfully' })
+    @ApiResponse({ status: 400, description: 'Validation failed' })
+    async register(@Body() registerDto: CreateUserDto) {
+        return this.authService.register(registerDto);
+    }
 
     // TODO: Implementar metodos de recuperacion de contraseña
     // @Post('reset-password')

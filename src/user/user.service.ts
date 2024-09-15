@@ -1,22 +1,24 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
+import { CreateUserDto } from './dto/create-user.dto';
 
 @Injectable()
 export class UserService {  // Asegúrate de que es 'UserService' y no 'UsersService'
   constructor(private readonly prisma: PrismaService) { }
-  // Método para validar al usuario con email y contraseña
-  // async validateUser(email: string, password: string): Promise<any> {
-  //   const user = await this.prisma.user.findUnique({
-  //     where: { email },
-  //   });
 
-  //   if (user && (await bcrypt.compare(password, user.password))) {
-  //     const { password, ...result } = user;
-  //     return result;
-  //   }
-  //   return null;
-  // }
+  // Método para validar al usuario con email y contraseña
+  async validateUser(email: string, password: string) {
+    const user = await this.findUserByEmail(email);
+    if (!user) {
+      return null;
+    }
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      return null;
+    }
+    return user;
+  }
 
   // Buscar un usuario por email
   async findUserByEmail(email: string) {
@@ -24,6 +26,23 @@ export class UserService {  // Asegúrate de que es 'UserService' y no 'UsersSer
       where: { email },
     });
   }
+
+  // Crear un usuario
+  async createUser(createUserDto: CreateUserDto) {
+    return this.prisma.user.create({
+      data: {
+        first_name: createUserDto.first_name,
+        middle_name: createUserDto.middle_name,
+        first_surname: createUserDto.first_surname,
+        second_surname: createUserDto.second_surname,
+        email: createUserDto.email,
+        phone_number: createUserDto.phone_number,
+        password: createUserDto.password,
+        birthdate: new Date(createUserDto.birthdate),
+      },
+    });
+  }
+
 
   // TODO: Implementar servicio para Cambiar la contraseña
   // async changePassword(userId: number, newPassword: string) {
@@ -54,19 +73,6 @@ export class UserService {  // Asegúrate de que es 'UserService' y no 'UsersSer
   //   // Ejemplo: si el código es correcto, retorna true, si no, retorna false.
   //   return user.twoFactorCode === code;
   // }
-
-
-  // TODO: Implementar servicio para  Generar un código de 2FA
-  // async create(createUserDto: CreateUserDto) {
-  //   const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
-  //   return this.prisma.user.create({
-  //     data: {
-  //       ...createUserDto,
-  //       password: hashedPassword,
-  //     },
-  //   });
-  // }
-
 
   // TODO: Implementar servicio para  Actualizar un usuario
   // async findAll() {
