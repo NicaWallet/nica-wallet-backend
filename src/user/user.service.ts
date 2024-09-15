@@ -31,11 +31,18 @@ export class UserService {  // Asegúrate de que es 'UserService' y no 'UsersSer
   async createUser(createUserDto: CreateUserDto) {
     return this.prisma.user.create({
       data: {
-        ...createUserDto,
-        birthdate: new Date(createUserDto.birthdate), 
+        first_name: createUserDto.first_name,
+        middle_name: createUserDto.middle_name,
+        first_surname: createUserDto.first_surname,
+        second_surname: createUserDto.second_surname,
+        email: createUserDto.email,
+        phone_number: createUserDto.phone_number,
+        password: createUserDto.password,
+        birthdate: new Date(createUserDto.birthdate),
       },
     });
   }
+
 
   // TODO: Implementar servicio para Cambiar la contraseña
   // async changePassword(userId: number, newPassword: string) {

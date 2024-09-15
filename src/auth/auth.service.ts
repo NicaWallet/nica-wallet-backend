@@ -38,7 +38,7 @@ export class AuthService {
   }
 
 
-  async register(registerDto: CreateUserDto) {
+  async register(registerDto: CreateUserDto, roleName = 'User') {
     // Verificar si el correo ya está registrado
     const existingUser = await this.usersService.findUserByEmail(registerDto.email);
     if (existingUser) {
@@ -49,14 +49,29 @@ export class AuthService {
     const hashedPassword = await bcrypt.hash(registerDto.password, 10);
 
     // Convertir el birthdate de string a Date
-    const birthdate = new Date(registerDto.birthdate).toISOString();  // Convert the birthdate to a string
+    const birthdate = new Date(registerDto.birthdate).toISOString();
 
     try {
+      // Crear el nuevo usuario sin el rol
       const newUser = await this.usersService.createUser({
         ...registerDto,
         password: hashedPassword,
-        birthdate,  // Convertido a Date
+        birthdate,
       });
+
+      // Obtener el rol basado en el nombre (por ejemplo, Admin o User)
+      const role = await this.prisma.role.findUnique({
+        where: { role_name: roleName }, // 'roleName' es el nombre del rol (por defecto 'User')
+      });
+
+      // Asignar el rol al usuario en la tabla intermedia 'UserRole'
+      await this.prisma.userRole.create({
+        data: {
+          user_id: newUser.user_id,
+          role_id: role.role_id,
+        },
+      });
+
       return { message: 'User registered successfully, please verify your email' };
     } catch (error) {
       console.error('Error al crear usuario:', error);

@@ -192,7 +192,7 @@ model Preference {
 
 model Role {
   role_id    Int      @id @default(autoincrement())
-  role_name  String
+  role_name  String   @unique
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
