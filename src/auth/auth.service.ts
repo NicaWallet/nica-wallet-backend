@@ -9,7 +9,7 @@ import { CreateUserDto } from './dto/register.dto';
 @Injectable()
 export class AuthService {
   constructor(
-    private readonly usersService: UserService,  // Asegúrate de que es UserService
+    private readonly usersService: UserService,
     private readonly jwtService: JwtService,
     private readonly prisma: PrismaService,
   ) { }
@@ -31,9 +31,14 @@ export class AuthService {
 
   async login(loginDto: LoginDto) {
     const user = await this.validateUser(loginDto.email, loginDto.password);
+
+    const { password, ...safeUser } = user;
+
     const payload = { email: user.email, sub: user.user_id };
     return {
+      message: 'Login successful',
       access_token: this.jwtService.sign(payload),
+      user: safeUser,  // Devolviendo el objeto de usuario sin los campos sensibles
     };
   }
 

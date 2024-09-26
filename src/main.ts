@@ -15,6 +15,7 @@ async function bootstrap() {
   app.enableCors({
     origin: [
       'http://localhost:5173',
+      'http://127.0.0.1:5173',
       'https://nica-wallet-vite-6c1501ef35e8.herokuapp.com',
     ],
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
