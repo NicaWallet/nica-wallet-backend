@@ -9,8 +9,8 @@ import { ConfigModule } from '@nestjs/config';
     ConfigModule.forRoot(),
     PrismaModule,
   ],
-  providers: [UserService],  // Asegúrate de que está aquí en providers
+  providers: [UserService],  
   controllers: [UsersController],
-  exports: [UserService],  // Y exportado correctamente aquí
+  exports: [UserService],  
 })
 export class UserModule {}
