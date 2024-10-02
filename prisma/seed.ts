@@ -27,10 +27,11 @@ async function main() {
     await prisma.user.deleteMany();
     await prisma.role.deleteMany(); // Ahora podemos eliminar roles
 
-    const [readPermission, writePermission, deletePermission] = await Promise.all([
+    const [readPermission, writePermission, deletePermission, updatePermission] = await Promise.all([
         prisma.permission.create({ data: { permission_name: 'READ' } }),
         prisma.permission.create({ data: { permission_name: 'WRITE' } }),
         prisma.permission.create({ data: { permission_name: 'DELETE' } }),
+        prisma.permission.create({ data: { permission_name: 'UPDATE' } }), // Nuevo permiso
     ]);
 
     // Crear roles
@@ -46,13 +47,20 @@ async function main() {
         },
     });
 
-    // Asignar permisos a los roles
+    // Asignar permisos al rol de Admin, incluyendo todos los permisos
     await prisma.rolePermission.createMany({
         data: [
-            { role_id: adminRole.role_id, permission_id: readPermission.permission_id }, // Admin can READ
-            { role_id: adminRole.role_id, permission_id: writePermission.permission_id }, // Admin can WRITE
-            { role_id: adminRole.role_id, permission_id: deletePermission.permission_id }, // Admin can DELETE
-            { role_id: userRole.role_id, permission_id: readPermission.permission_id },  // User can READ
+            { role_id: adminRole.role_id, permission_id: readPermission.permission_id },
+            { role_id: adminRole.role_id, permission_id: writePermission.permission_id },
+            { role_id: adminRole.role_id, permission_id: deletePermission.permission_id },
+            { role_id: adminRole.role_id, permission_id: updatePermission.permission_id },
+        ],
+    });
+
+    // Asignar permisos limitados al rol de usuario normal
+    await prisma.rolePermission.createMany({
+        data: [
+            { role_id: userRole.role_id, permission_id: readPermission.permission_id },
         ],
     });
 

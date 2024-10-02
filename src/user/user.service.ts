@@ -85,7 +85,7 @@ export class UserService {
         phone_number: true,
         birthdate: true,
         created_at: true,
-        updated_at: true, 
+        updated_at: true,
         userRoles: {
           select: {
             role: {
@@ -104,6 +104,28 @@ export class UserService {
     return user;
   }
 
+  async getUserPermissions(userId: number) {
+    const userRoles = await this.prisma.userRole.findMany({
+      where: { user_id: userId },
+      include: {
+        role: {
+          include: {
+            rolePermissions: {
+              include: {
+                permission: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    const permissions = userRoles.flatMap(userRole =>
+      userRole.role.rolePermissions.map(rolePermission => rolePermission.permission.permission_name)
+    );
+
+    return permissions;
+  }
   // TODO: Implementar servicio para Cambiar la contraseña
   // async changePassword(userId: number, newPassword: string) {
   //   const hashedPassword = await bcrypt.hash(newPassword, 10);
