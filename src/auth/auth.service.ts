@@ -1,8 +1,10 @@
+import * as requestIp from 'request-ip';
+import * as bcrypt from 'bcrypt';
+import { Request as ExpressRequest } from 'express';
 import { BadRequestException, Injectable, InternalServerErrorException, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UserService } from 'src/user/user.service';
 import { LoginDto } from './dto/login.dto';
-import * as bcrypt from 'bcrypt';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateUserDto } from './dto/register.dto';
 
@@ -29,16 +31,49 @@ export class AuthService {
     return result;
   }
 
-  async login(loginDto: LoginDto) {
+  async login(loginDto: LoginDto, req: ExpressRequest) {
     const user = await this.validateUser(loginDto.email, loginDto.password);
+
+    // Obtener roles del usuario
+    const userRoles = await this.prisma.userRole.findMany({
+      where: { user_id: user.user_id },
+      include: {
+        role: true,
+      },
+    });
+
+    const roles = userRoles.map(userRole => userRole.role.role_name);
+
+    // Convertir el tipo de req a lo esperado por request-ip
+    const ipAddress = requestIp.getClientIp(req as any); // Forzar el tipo compatible con request-ip
+    console.log('IP Address:', ipAddress);
+    const deviceInfo = req.headers['user-agent'] || 'Unknown device'; // Información del dispositivo
+    console.log('Device Info:', deviceInfo);
+
+    console.log('User:', user);
+    console.log('User Id:', user.user_id);
+
+    // Guardar los detalles de la conexión en la tabla UserConnectionLog
+    await this.prisma.userConnectionLog.create({
+      data: {
+        login_time: new Date(),
+        logout_time: null, // El valor nulo es válido
+        ip_address: ipAddress ?? 'Unknown IP',
+        device_info: deviceInfo,
+        user: {
+          connect: { user_id: user.user_id },  // Usar la relación connect para asociar el user_id
+        },
+      },
+    });
 
     const { password, ...safeUser } = user;
 
-    const payload = { email: user.email, sub: user.user_id };
+    const payload = { email: user.email, sub: user.user_id, roles };
+
     return {
       message: 'Login successful',
       access_token: this.jwtService.sign(payload),
-      user: safeUser,  // Devolviendo el objeto de usuario sin los campos sensibles
+      user: safeUser,
     };
   }
 

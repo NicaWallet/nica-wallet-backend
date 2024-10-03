@@ -24,6 +24,11 @@ export class UserService {
   async findUserByEmail(email: string) {
     return this.prisma.user.findUnique({
       where: { email },
+      include: {
+        userRoles: {
+          include: { role: true },
+        },
+      },
     });
   }
 

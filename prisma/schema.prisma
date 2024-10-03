@@ -142,7 +142,7 @@ model UserConnectionLog {
   connection_id Int      @id @default(autoincrement())
   user_id       Int
   login_time    DateTime
-  logout_time   DateTime
+  logout_time   DateTime?
   ip_address    String
   device_info   String
   created_at    DateTime @default(now())
