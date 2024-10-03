@@ -4,6 +4,7 @@ import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { PrismaService } from './prisma/prisma.service';
 import { Response } from 'express';
+import { env } from 'process';
 
 
 async function bootstrap() {
@@ -13,12 +14,9 @@ async function bootstrap() {
 
   // Habilitar CORS para localhost y un dominio futuro
   app.enableCors({
-    origin: [
-      'http://localhost:5173',
-      'https://nica-wallet-vite-6c1501ef35e8.herokuapp.com',
-    ],
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
-    allowedHeaders: 'Content-Type, Authorization',
+    origin: env.CORS_ALLOWED_ORIGINS,
+    methods: env.CORS_ALLOWED_METHODS,
+    allowedHeaders: env.CORS_ALLOWED_HEADERS,
     credentials: true,
   });
 
@@ -28,7 +26,7 @@ async function bootstrap() {
   // Configuración de Swagger
   const config = new DocumentBuilder()
     .setTitle('SecureAdmin API')
-    .setDescription('API para la gestión de usuarios y roles en SecureAdmin')
+    .setDescription('API para la gestión de finanzas personales - NicaWallet')
     .setVersion('1.0')
     .addBearerAuth()
     .build();

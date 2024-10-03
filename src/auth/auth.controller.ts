@@ -1,8 +1,9 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Post, Req } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { CreateUserDto } from './dto/register.dto';
+import { Request } from 'express';
 
 @ApiTags('Authentication')
 @Controller('auth')
@@ -12,8 +13,8 @@ export class AuthController {
     @Post('login')
     @ApiOperation({ summary: 'User login' })
     @ApiResponse({ status: 200, description: 'Login successful.' })
-    async login(@Body() loginDto: LoginDto) {
-        return this.authService.login(loginDto);
+    async login(@Body() loginDto: LoginDto, @Req() req: Request) {
+        return this.authService.login(loginDto, req);
     }
 
     // TODO: Implementar metodo de registro

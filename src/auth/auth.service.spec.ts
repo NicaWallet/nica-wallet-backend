@@ -52,6 +52,20 @@ describe('AuthService', () => {
       password: await bcrypt.hash('password', 10),
       created_at: new Date(),
       updated_at: new Date(),
+      userRoles: [
+        {
+          role: {
+            role_id: 1,
+            role_name: 'User',
+            created_at: new Date(),
+            updated_at: new Date(),
+          },
+          user_id: 1,
+          role_id: 1,
+          created_at: new Date(),
+          updated_at: new Date(),
+        },
+      ],
     };
     jest.spyOn(usersService, 'findUserByEmail').mockResolvedValue(mockUser);
 
@@ -72,6 +86,20 @@ describe('AuthService', () => {
       password: await bcrypt.hash('password', 10),
       created_at: new Date(),
       updated_at: new Date(),
+      userRoles: [
+        {
+          role: {
+            role_id: 1,
+            role_name: 'User',
+            created_at: new Date(),
+            updated_at: new Date(),
+          },
+          user_id: 1,
+          role_id: 1,
+          created_at: new Date(),
+          updated_at: new Date(),
+        },
+      ],
     };
     jest.spyOn(usersService, 'findUserByEmail').mockResolvedValue(mockUser);
 
@@ -96,7 +124,8 @@ describe('AuthService', () => {
     jest.spyOn(service, 'validateUser').mockResolvedValue(mockUser);
     jest.spyOn(jwtService, 'sign').mockReturnValue(mockToken);
 
-    const result = await service.login({ email: 'test@example.com', password: 'password' });
+    const mockRequest = { headers: { 'user-agent': 'mockUserAgent' } } as any;
+    const result = await service.login({ email: 'test@example.com', password: 'password' }, mockRequest);
     expect(result.access_token).toEqual(mockToken);
   });
 });
