@@ -25,7 +25,7 @@ async function bootstrap() {
 
   // Configuración de Swagger
   const config = new DocumentBuilder()
-    .setTitle('SecureAdmin API')
+    .setTitle('NicaWallet API')
     .setDescription('API para la gestión de finanzas personales - NicaWallet')
     .setVersion('1.0')
     .addBearerAuth()
