@@ -14,7 +14,9 @@ export class AuthController {
     @ApiOperation({ summary: 'User login' })
     @ApiResponse({ status: 200, description: 'Login successful.' })
     async login(@Body() loginDto: LoginDto, @Req() req: Request) {
-        return this.authService.login(loginDto, req);
+        const result = await this.authService.login(loginDto, req);
+        console.log('Login executed successfully');
+        return result;
     }
 
     // TODO: Implementar metodo de registro
@@ -23,7 +25,9 @@ export class AuthController {
     @ApiResponse({ status: 201, description: 'User registered successfully' })
     @ApiResponse({ status: 400, description: 'Validation failed' })
     async register(@Body() registerDto: CreateUserDto) {
-        return this.authService.register(registerDto);
+        const result = await this.authService.register(registerDto);
+        console.log('Registration executed successfully');
+        return result;
     }
 
     // TODO: Implementar metodos de recuperacion de contraseña
