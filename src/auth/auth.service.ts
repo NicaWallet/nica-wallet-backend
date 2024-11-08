@@ -46,12 +46,13 @@ export class AuthService {
 
     // Convertir el tipo de req a lo esperado por request-ip
     const ipAddress = requestIp.getClientIp(req as any); // Forzar el tipo compatible con request-ip
-    console.log('IP Address:', ipAddress);
     const deviceInfo = req.headers['user-agent'] || 'Unknown device'; // Información del dispositivo
-    console.log('Device Info:', deviceInfo);
-
-    console.log('User:', user);
-    console.log('User Id:', user.user_id);
+    
+    // ** Debugging
+    // console.log('IP Address:', ipAddress);
+    // console.log('Device Info:', deviceInfo);
+    // console.log('User:', user);
+    // console.log('User Id:', user.user_id);
 
     // Guardar los detalles de la conexión en la tabla UserConnectionLog
     await this.prisma.userConnectionLog.create({
@@ -70,6 +71,7 @@ export class AuthService {
 
     const payload = { email: user.email, sub: user.user_id, roles };
 
+    console.info('Login successful');
     return {
       message: 'Login successful',
       access_token: this.jwtService.sign(payload),
@@ -112,6 +114,7 @@ export class AuthService {
         },
       });
 
+      console.info('User registered successfully');
       return { message: 'User registered successfully, please verify your email' };
     } catch (error) {
       console.error('Error al crear usuario:', error);

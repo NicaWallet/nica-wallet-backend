@@ -14,9 +14,9 @@ async function bootstrap() {
 
   // Habilitar CORS para localhost y un dominio futuro
   app.enableCors({
-    origin: env.CORS_ALLOWED_ORIGINS,
-    methods: env.CORS_ALLOWED_METHODS,
-    allowedHeaders: env.CORS_ALLOWED_HEADERS,
+    origin: env.CORS_ALLOWED_ORIGINS.split(',').map(origin => origin.trim()),
+    methods: env.CORS_ALLOWED_METHODS.split(',').map(method => method.trim()),
+    allowedHeaders: env.CORS_ALLOWED_HEADERS.split(',').map(header => header.trim()),
     credentials: true,
   });
 
@@ -25,7 +25,7 @@ async function bootstrap() {
 
   // Configuración de Swagger
   const config = new DocumentBuilder()
-    .setTitle('SecureAdmin API')
+    .setTitle('NicaWallet API')
     .setDescription('API para la gestión de finanzas personales - NicaWallet')
     .setVersion('1.0')
     .addBearerAuth()

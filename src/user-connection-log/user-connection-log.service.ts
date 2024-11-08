@@ -54,9 +54,15 @@ export class UserConnectionLogService {
     }
 
     // Get all connection logs for a specific user by user ID
-    async findByUserId(userId: number) {
+    async findByUserId(userId: number | string) {
+        // Ensure `userId` is a number
+        const parsedUserId = typeof userId === 'string' ? parseInt(userId, 10) : userId;
+
         return this.prisma.userConnectionLog.findMany({
-            where: { user_id: userId },
+            where: { user_id: parsedUserId },
+            orderBy: {
+                created_at: 'desc', // Order by created_at to get the most recent first
+            },
         });
     }
 

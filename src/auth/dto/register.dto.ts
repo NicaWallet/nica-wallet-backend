@@ -27,7 +27,7 @@ export class CreateUserDto {
     @IsString()
     phone_number?: string;
 
-    @ApiProperty({ description: 'Password of the user', required: true, example: 'password123' })
+    @ApiProperty({ description: 'Password of the user', required: true, example: 'userPassword' })
     @IsNotEmpty()
     @IsString()
     password: string;
