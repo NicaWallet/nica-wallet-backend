@@ -15,7 +15,7 @@ export class AuthController {
     @ApiResponse({ status: 200, description: 'Login successful.' })
     async login(@Body() loginDto: LoginDto, @Req() req: Request) {
         const result = await this.authService.login(loginDto, req);
-        console.log('Login executed successfully');
+        // console.log('Login executed successfully');
         return result;
     }
 
@@ -26,7 +26,7 @@ export class AuthController {
     @ApiResponse({ status: 400, description: 'Validation failed' })
     async register(@Body() registerDto: CreateUserDto) {
         const result = await this.authService.register(registerDto);
-        console.log('Registration executed successfully');
+        // console.log('Registration executed successfully');
         return result;
     }
 

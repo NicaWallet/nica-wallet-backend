@@ -175,6 +175,19 @@ export class AuthService {
     }
   }
 
+  validateSessionExpiration(token: string): void {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET) as { exp: number, iat: number, userId: number };
+    const currentTime = Math.floor(Date.now() / 1000);
+
+    // console.log('Token issued at (iat):', decoded.iat);
+    // console.log('Token expires at (exp):', decoded.exp);
+    // console.log('Current time:', currentTime);
+
+    if (currentTime - decoded.iat > Number(process.env.SESSION_TIMEOUT_MINUTES) * 60) {
+      throw new UnauthorizedException('Session expired due to inactivity');
+    }
+  }
+
   // TODO: Implementar metodo resetPassword
   // async changePassword(userId: number, changePasswordDto: ChangePasswordDto) {
   //   return this.usersService.changePassword(userId, changePasswordDto.newPassword);

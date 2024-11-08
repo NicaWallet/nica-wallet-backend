@@ -18,7 +18,7 @@ export class RolesGuard extends JwtAuthGuard implements CanActivate {
         const user = request.user;
 
         // Imprimir para depuración
-        console.log('User roles in request:', user.roles);
+        // console.log('User roles in request:', user.roles);
 
         if (user && user.roles && user.roles.some((role: string) => role.toLowerCase() === requiredRole.toLowerCase())) {
             return true; // Permitir acceso si el usuario tiene al menos uno de los roles requeridos
