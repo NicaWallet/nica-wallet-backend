@@ -1,5 +1,5 @@
 import { Body, Controller, Post, Req } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { CreateUserDto } from './dto/register.dto';
@@ -28,6 +28,16 @@ export class AuthController {
         const result = await this.authService.register(registerDto);
         console.log('Registration executed successfully');
         return result;
+    }
+
+    @Post('refresh-token')
+    @ApiOperation({ summary: 'Refresh access token' })
+    @ApiResponse({ status: 200, description: 'Token refreshed successfully.' })
+    @ApiResponse({ status: 401, description: 'Invalid or expired token.' })
+    @ApiBody({ schema: { example: { token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwiaWF0IjoxNjA5MjI2MjIyLCJleHAiOjE2MDkyMjYyMjJ9.1J7' } } })
+    async refreshToken(@Body('token') token: string) {
+        const newToken = await this.authService.refreshToken(token);
+        return { message: 'Token refreshed successfully', access_token: newToken };
     }
 
     // TODO: Implementar metodos de recuperacion de contraseña
