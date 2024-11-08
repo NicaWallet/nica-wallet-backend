@@ -71,6 +71,7 @@ export class AuthService {
 
     const payload = { email: user.email, sub: user.user_id, roles };
 
+    console.info('Login successful');
     return {
       message: 'Login successful',
       access_token: this.jwtService.sign(payload),
@@ -113,6 +114,7 @@ export class AuthService {
         },
       });
 
+      console.info('User registered successfully');
       return { message: 'User registered successfully, please verify your email' };
     } catch (error) {
       console.error('Error al crear usuario:', error);
