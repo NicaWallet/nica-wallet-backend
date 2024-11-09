@@ -14,6 +14,7 @@ export class MailService {
                 user: process.env.MAIL_USER,
                 pass: process.env.MAIL_PASSWORD,
             },
+            secure: true,
         });
     }
 
