@@ -2,12 +2,16 @@ import * as requestIp from 'request-ip';
 import * as bcrypt from 'bcrypt';
 import * as jwt from 'jsonwebtoken';
 import { Request as ExpressRequest } from 'express';
+import * as dotenv from 'dotenv';
 import { BadRequestException, Injectable, InternalServerErrorException, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UserService } from 'src/user/user.service';
 import { LoginDto } from './dto/login.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateUserDto } from './dto/register.dto';
+import { MailService } from 'src/mail/mail.service';
+
+dotenv.config();
 
 @Injectable()
 export class AuthService {
@@ -15,6 +19,7 @@ export class AuthService {
     private readonly usersService: UserService,
     private readonly jwtService: JwtService,
     private readonly prisma: PrismaService,
+    private readonly mailService: MailService,
   ) { }
 
   async validateUser(email: string, password: string): Promise<any> {
@@ -188,18 +193,33 @@ export class AuthService {
     }
   }
 
-  // TODO: Implementar metodo resetPassword
-  // async changePassword(userId: number, changePasswordDto: ChangePasswordDto) {
-  //   return this.usersService.changePassword(userId, changePasswordDto.newPassword);
-  // }
+  async sendResetPasswordLink(email: string): Promise<void> {
+    const user = await this.usersService.findUserByEmail(email);
+    if (!user) {
+      throw new BadRequestException('Email not found');
+    }
 
-  // TODO: Implementar metodo resetPassword
-  // async confirmEmail(userId: number) {
-  //   return this.usersService.confirmEmail(userId);
-  // }
+    // Generar el token de restablecimiento de contraseña
+    const resetToken = this.jwtService.sign({ sub: user.user_id }, { expiresIn: '1h' }); // Ajusta el tiempo según sea necesario
+    const resetLink = `${process.env.APP_URL}/reset-password?token=${resetToken}`;
 
-  // TODO: Implementar metodo resetPassword
-  // async verifyTwoFactorCode(userId: number, code: string) {
-  //   return this.usersService.verifyTwoFactorCode(userId, code);
-  // }
+    console.log('Reset link:', resetLink);
+
+    // Enviar el correo
+    await this.mailService.sendResetPasswordEmail(email, user.first_name, resetLink);
+  }
+
+
+  async resetPassword(token: string, newPassword: string): Promise<void> {
+    try {
+      const decoded = this.jwtService.verify(token);
+      const userId = decoded.sub;
+
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+      await this.usersService.updatePassword(userId, hashedPassword);
+    } catch (error) {
+      throw new UnauthorizedException('Invalid or expired token');
+    }
+  }
+
 }

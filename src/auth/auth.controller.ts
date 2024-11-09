@@ -1,9 +1,11 @@
-import { Body, Controller, Post, Req } from '@nestjs/common';
+import { Body, Controller, HttpCode, HttpStatus, Post, Req } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { CreateUserDto } from './dto/register.dto';
 import { Request } from 'express';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 
 @ApiTags('Authentication')
 @Controller('auth')
@@ -19,7 +21,6 @@ export class AuthController {
         return result;
     }
 
-    // TODO: Implementar metodo de registro
     @Post('register')
     @ApiOperation({ summary: 'Register a new user' })
     @ApiResponse({ status: 201, description: 'User registered successfully' })
@@ -40,35 +41,67 @@ export class AuthController {
         return { message: 'Token refreshed successfully', access_token: newToken };
     }
 
-    // TODO: Implementar metodos de recuperacion de contraseña
-    // @Post('reset-password')
-    // @ApiOperation({ summary: 'Request password reset' })
-    // @ApiResponse({ status: 200, description: 'Password reset request successful.' })
-    // async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
-    //     return this.authService.resetPassword(resetPasswordDto);
-    // }
+    @Post('forgot-password')
+    @HttpCode(HttpStatus.OK)
+    @ApiOperation({ summary: 'Request a password reset link' })
+    @ApiBody({ type: ForgotPasswordDto, description: 'Email of the user requesting a password reset' })
+    @ApiResponse({
+        status: HttpStatus.OK,
+        description: 'Password reset link sent successfully',
+        schema: {
+            example: { message: 'Password reset link sent successfully to user@example.com' },
+        }
+    })
+    @ApiResponse({
+        status: HttpStatus.BAD_REQUEST,
+        description: 'Email not found',
+        schema: {
+            example: {
+                statusCode: HttpStatus.BAD_REQUEST,
+                message: 'Email not found',
+                error: 'Bad Request'
+            }
+        }
+    })
+    @ApiResponse({
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+        description: 'Internal server error',
+        schema: {
+            example: {
+                statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+                message: 'An error occurred while sending the reset link',
+                error: 'Internal Server Error'
+            }
+        }
+    })
+    async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
+        try {
+            await this.authService.sendResetPasswordLink(forgotPasswordDto.email);
+            return { message: `Password reset link sent successfully to ${forgotPasswordDto.email}` };
+        } catch (error) {
+            if (error.status === HttpStatus.BAD_REQUEST) {
+                return {
+                    statusCode: HttpStatus.BAD_REQUEST,
+                    message: 'Email not found',
+                    error: 'Bad Request',
+                };
+            }
+            // Catch-all for any other errors
+            return {
+                statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+                message: 'An error occurred while sending the reset link',
+                error: 'Internal Server Error',
+            };
+        }
+    }
 
-    // TODO: Implementar metodos de cambio de contraseña
-    // @Post('change-password')
-    // @ApiOperation({ summary: 'Change password' })
-    // @ApiResponse({ status: 200, description: 'Password changed successfully.' })
-    // async changePassword(@Body() changePasswordDto: ChangePasswordDto) {
-    //     return this.authService.changePassword(changePasswordDto, 'userIdPlaceholder'); // TODO: Replace with actual userId extraction logic
-    // }
+    @Post('reset-password')
+    @ApiOperation({ summary: 'Reset user password' })
+    @ApiResponse({ status: 200, description: 'Password reset successfully.' })
+    @ApiResponse({ status: 401, description: 'Invalid or expired token.' })
+    async resetPassword(@Body('token') token: string, @Body() resetPasswordDto: ResetPasswordDto) {
+        await this.authService.resetPassword(token, resetPasswordDto.newPassword);
+        return { message: 'Password reset successfully' };
+    }
 
-    // TODO: Implementar metodos de confirmacion de email
-    // @Post('confirm-email')
-    // @ApiOperation({ summary: 'Confirm user email' })
-    // @ApiResponse({ status: 200, description: 'Email confirmed successfully.' })
-    // async confirmEmail(@Body() confirmEmailDto: ConfirmEmailDto) {
-    //     return this.authService.confirmEmail(confirmEmailDto);
-    // }
-
-    // TODO: Implementar metodos de autenticacion de dos factores
-    // @Post('two-factor-auth')
-    // @ApiOperation({ summary: 'Verify two-factor authentication' })
-    // @ApiResponse({ status: 200, description: 'Two-factor authentication successful.' })
-    // async twoFactorAuth(@Body() twoFactorAuthDto: TwoFactorAuthDto) {
-    //     return this.authService.twoFactorAuth(twoFactorAuthDto, 'userIdPlaceholder'); // TODO: Replace with actual userId extraction logic
-    // }
 }

@@ -67,7 +67,8 @@ export class AppModule {
       .apply(ActivityMiddleware)
       .exclude(
         { path: 'auth/login', method: RequestMethod.POST },
-        { path: 'auth/register', method: RequestMethod.POST }
+        { path: 'auth/register', method: RequestMethod.POST },
+        { path: 'auth/forgot-password', method: RequestMethod.POST },
       )
       .forRoutes({ path: '*', method: RequestMethod.ALL });
   }
