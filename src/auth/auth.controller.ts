@@ -1,4 +1,4 @@
-import { Body, Controller, HttpCode, HttpStatus, Post, Req } from '@nestjs/common';
+import { BadRequestException, Body, Controller, HttpCode, HttpStatus, Post, Req, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
@@ -6,6 +6,7 @@ import { CreateUserDto } from './dto/register.dto';
 import { Request } from 'express';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { JwtAuthGuard } from './jwt-auth.guard';
 
 @ApiTags('Authentication')
 @Controller('auth')
@@ -86,7 +87,6 @@ export class AuthController {
                     error: 'Bad Request',
                 };
             }
-            // Catch-all for any other errors
             return {
                 statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
                 message: 'An error occurred while sending the reset link',
@@ -95,12 +95,30 @@ export class AuthController {
         }
     }
 
+    @UseGuards(JwtAuthGuard)
     @Post('reset-password')
     @ApiOperation({ summary: 'Reset user password' })
     @ApiResponse({ status: 200, description: 'Password reset successfully.' })
     @ApiResponse({ status: 401, description: 'Invalid or expired token.' })
-    async resetPassword(@Body('token') token: string, @Body() resetPasswordDto: ResetPasswordDto) {
-        await this.authService.resetPassword(token, resetPasswordDto.newPassword);
+    async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
+        const { token, newPassword } = resetPasswordDto;
+
+        // console.log('Received token:', token); // Log para depuración
+        // console.log('Received newPassword:', newPassword); // Log para depuración
+
+        if (!token) {
+            throw new BadRequestException('Token is required');
+        }
+
+        if (!newPassword) {
+            throw new BadRequestException('New password is required');
+        }
+
+        if (newPassword.length < 8) {
+            throw new BadRequestException('Password must be at least 8 characters long');
+        }
+
+        await this.authService.resetPassword(token, newPassword);
         return { message: 'Password reset successfully' };
     }
 
