@@ -110,6 +110,12 @@ export class UserService {
     return user;
   }
 
+  async findOneUserIncludePassword(id: number) {
+    return this.prisma.user.findUnique({
+      where: { user_id: id },
+    });
+  }
+
   async getUserPermissions(userId: number) {
     const userRoles = await this.prisma.userRole.findMany({
       where: { user_id: userId },

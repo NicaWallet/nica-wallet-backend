@@ -215,17 +215,44 @@ export class AuthService {
 
   async resetPassword(token: string, newPassword: string): Promise<void> {
     try {
-      const decoded = this.jwtService.verify(token, {
-        secret: process.env.JWT_SECRET,
-      });
+      const decoded = this.jwtService.verify(token);
       const userId = decoded.sub;
 
+      // Validar si la nueva contraseña es diferente a la actual
+      await this.validateNewPassword(userId, newPassword);
+
+      // Cifrar la nueva contraseña antes de actualizarla
       const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+      // Actualizar la contraseña en la base de datos
       await this.usersService.updatePassword(userId, hashedPassword);
-      // console.log('Password updated successfully');
+
+      console.log('Password reset successfully for user ID:', userId);
     } catch (error) {
       console.error('Error during password reset:', error);
+
+      // Verificar si el error es una instancia de BadRequestException y lanzarla tal cual
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+
+      // Si no, devolver un error de token inválido o expirado
       throw new UnauthorizedException('Invalid or expired token');
+    }
+  }
+
+
+  async validateNewPassword(userId: number, newPassword: string): Promise<void> {
+    // Obtener el usuario con la contraseña actual
+    const user = await this.usersService.findOneUserIncludePassword(userId);
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    // Comparar la nueva contraseña con la actual
+    const isSamePassword = await bcrypt.compare(newPassword, user.password);
+    if (isSamePassword) {
+      throw new BadRequestException('The new password must be different from the current password');
     }
   }
 

@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, HttpCode, HttpStatus, Post, Req, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, Controller, HttpCode, HttpException, HttpStatus, Post, Req, UnauthorizedException, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
@@ -95,17 +95,15 @@ export class AuthController {
         }
     }
 
-    @UseGuards(JwtAuthGuard)
     @Post('reset-password')
     @ApiOperation({ summary: 'Reset user password' })
     @ApiResponse({ status: 200, description: 'Password reset successfully.' })
     @ApiResponse({ status: 401, description: 'Invalid or expired token.' })
+    @ApiResponse({ status: 400, description: 'Bad request.' })
     async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
         const { token, newPassword } = resetPasswordDto;
 
-        // console.log('Received token:', token); // Log para depuración
-        // console.log('Received newPassword:', newPassword); // Log para depuración
-
+        // Validaciones iniciales
         if (!token) {
             throw new BadRequestException('Token is required');
         }
@@ -118,8 +116,21 @@ export class AuthController {
             throw new BadRequestException('Password must be at least 8 characters long');
         }
 
-        await this.authService.resetPassword(token, newPassword);
-        return { message: 'Password reset successfully' };
+        try {
+            // Llama al servicio para resetear la contraseña
+            await this.authService.resetPassword(token, newPassword);
+            return { message: 'Password reset successfully' };
+        } catch (error) {
+            // Manejo de errores específicos
+            if (error instanceof BadRequestException || error instanceof UnauthorizedException) {
+                throw error;
+            }
+            // Manejo de errores generales
+            throw new HttpException(
+                'An unexpected error occurred while resetting the password',
+                HttpStatus.INTERNAL_SERVER_ERROR,
+            );
+        }
     }
 
 }
