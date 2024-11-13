@@ -25,7 +25,7 @@ export class MailService {
                 : path.join(__dirname, '..', '..', 'templates', 'templates');
 
             const templatePath = path.join(baseDir, filePath);
-            console.log('Template path:', templatePath);
+            // console.log('Template path:', templatePath);
             return fs.readFileSync(templatePath, 'utf-8');
         } catch (error) {
             console.error('Error reading template file:', error);

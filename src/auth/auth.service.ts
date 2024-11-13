@@ -196,28 +196,35 @@ export class AuthService {
   async sendResetPasswordLink(email: string): Promise<void> {
     const user = await this.usersService.findUserByEmail(email);
     if (!user) {
+      console.warn('User not found with email:', email);
       throw new BadRequestException('Email not found');
     }
-
     // Generar el token de restablecimiento de contraseña
-    const resetToken = this.jwtService.sign({ sub: user.user_id }, { expiresIn: '1h' }); // Ajusta el tiempo según sea necesario
+    const resetToken = this.jwtService.sign({ sub: user.user_id }, { expiresIn: '1h' });
     const resetLink = `${process.env.APP_URL}/reset-password?token=${resetToken}`;
-
-    console.log('Reset link:', resetLink);
+    // console.log('Generated reset link:', resetLink);
 
     // Enviar el correo
-    await this.mailService.sendResetPasswordEmail(email, user.first_name, resetLink);
+    try {
+      await this.mailService.sendResetPasswordEmail(email, user.first_name, resetLink);
+    } catch (error) {
+      console.error('Error sending reset password email:', error);
+      throw new InternalServerErrorException('Error sending reset password email');
+    }
   }
-
 
   async resetPassword(token: string, newPassword: string): Promise<void> {
     try {
-      const decoded = this.jwtService.verify(token);
+      const decoded = this.jwtService.verify(token, {
+        secret: process.env.JWT_SECRET,
+      });
       const userId = decoded.sub;
 
       const hashedPassword = await bcrypt.hash(newPassword, 10);
       await this.usersService.updatePassword(userId, hashedPassword);
+      // console.log('Password updated successfully');
     } catch (error) {
+      console.error('Error during password reset:', error);
       throw new UnauthorizedException('Invalid or expired token');
     }
   }
