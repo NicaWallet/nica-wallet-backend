@@ -110,12 +110,35 @@ export class TransactionService {
     try {
       const { page, limit, all = false } = paginationOptions;
 
+      const selectFields = {
+        transaction_id: true,
+        amount: true,
+        date: true,
+        category: {
+          select: {
+            name: true,
+          },
+        },
+        subcategory: {
+          select: {
+            name: true,
+          },
+        },
+        classification: {
+          select: {
+            name: true,
+          },
+        },
+        created_at: true,
+        updated_at: true,
+      };
+
       if (all || (!page && !limit)) {
         const transactions = await this.prisma.transaction.findMany({
           where: {
             user_id: userId,
           },
-          include: this.baseIncludeOptions, // No incluye la relación `user`
+          select: selectFields,
         });
 
         const total = transactions.length;
@@ -136,7 +159,7 @@ export class TransactionService {
         },
         skip,
         take: currentLimit,
-        include: this.baseIncludeOptions, // No incluye la relación `user`
+        select: selectFields,
       });
 
       const total = await this.prisma.transaction.count({
@@ -298,5 +321,30 @@ export class TransactionService {
     return {
       message: "Transaction deleted successfully",
     };
+  }
+
+  /**
+   * Retrieves the details of a transaction, including related entities and history.
+   * @param transactionId - The ID of the transaction to retrieve.
+   * @param userId - The ID of the user requesting the details.
+   * @returns The transaction details.
+   * @throws NotFoundException if the transaction does not exist.
+   * @throws ForbiddenException if the user is not the owner of the transaction.
+   */
+  async getTransactionDetails(transactionId: number, userId: number) {
+    const transaction = await this.prisma.transaction.findUnique({
+      where: { transaction_id: transactionId },
+      include: this.includeOptionsWithUser, // Utiliza la configuración existente
+    });
+
+    if (!transaction) {
+      throw new NotFoundException(`Transaction with ID ${transactionId} not found`);
+    }
+
+    if (transaction.user_id !== userId) {
+      throw new ForbiddenException(`You do not have permission to access this transaction`);
+    }
+
+    return transaction;
   }
 }

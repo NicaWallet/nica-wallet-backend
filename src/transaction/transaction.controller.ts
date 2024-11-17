@@ -79,4 +79,17 @@ export class TransactionController {
     const userId = req.user.userId; // Obtiene el userId del token decodificado
     return this.transactionService.deleteTransaction(transactionId, userId);
   }
+
+  @Get(":transaction_id")
+  @ApiOperation({
+    summary: "Get details of a specific transaction",
+    description: "Retrieves detailed information of a transaction including its relations and history.",
+  })
+  @ApiResponse({ status: 200, description: "Transaction details retrieved successfully." })
+  @ApiResponse({ status: 403, description: "Forbidden: User is not the owner of the transaction" })
+  @ApiResponse({ status: 404, description: "Transaction not found" })
+  async getTransactionDetails(@Param("transaction_id", CustomParseIntPipe) transactionId: number, @Req() req: IAuthenticatedRequest) {
+    const userId = req.user.userId; // Obtiene el userId del token decodificado
+    return this.transactionService.getTransactionDetails(transactionId, userId);
+  }
 }
