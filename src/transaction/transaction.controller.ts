@@ -5,6 +5,7 @@ import { RolesGuard } from "../auth/roles.guard";
 import { ApiOperation, ApiResponse, ApiTags, ApiBearerAuth } from "@nestjs/swagger";
 import { IAuthenticatedRequest } from "../interfaces/auth/authenticated-request.interface";
 import { Roles } from "../auth/roles.decorator";
+import { CreateTransactionDto } from "./dto/create-transaction.dto";
 
 @ApiTags("Transaction")
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -35,5 +36,18 @@ export class TransactionController {
       all = true; // Si no se envían page y limit, se establece `all` en true
     }
     return this.transactionService.findAllByUserId(userId, { page, limit, all });
+  }
+
+  @Post()
+  @ApiOperation({
+    summary: "Create a new transaction",
+    description: "Endpoint to create a new transaction associated with the authenticated user.",
+  })
+  @ApiResponse({ status: 201, description: "Transaction created successfully." })
+  @ApiResponse({ status: 400, description: "Bad Request" })
+  @ApiResponse({ status: 404, description: "Category, Subcategory, or Classification not found" })
+  async createTransaction(@Req() req: IAuthenticatedRequest, @Body() createTransactionDto: CreateTransactionDto) {
+    const userId = req.user.userId;
+    return this.transactionService.createTransaction(userId, createTransactionDto);
   }
 }
