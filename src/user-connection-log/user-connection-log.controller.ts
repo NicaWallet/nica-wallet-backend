@@ -1,13 +1,14 @@
 import { Controller, Delete, Get, Param, Patch, Query, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiQuery, ApiBearerAuth } from "@nestjs/swagger";
 import { UserConnectionLogService } from './user-connection-log.service';
-import { PermissionsGuard } from '../permission/permissions.guard'; // Importar el guardián
-import { Permission } from '../permission/permission.decorator'; // Importar el decorador de permiso
+import { PermissionsGuard } from '../permission/permissions.guard';
+import { Permission } from '../permission/permission.decorator';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
 @ApiTags('User Connection Log')
 @Controller('user-connection-log')
-@UseGuards(JwtAuthGuard, PermissionsGuard) // Aplicar el guardián a nivel de controlador
+@UseGuards(JwtAuthGuard, PermissionsGuard)
+@ApiBearerAuth()
 export class UserConnectionLogController {
     constructor(private readonly userConnectionLogService: UserConnectionLogService) { }
 

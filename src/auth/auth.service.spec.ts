@@ -5,6 +5,36 @@ import { UserService } from '../user/user.service';
 import { PrismaService } from '../prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
 
+
+const mockUser = {
+  user_id: 1,
+  first_name: 'John',
+  middle_name: 'A',
+  first_surname: 'Doe',
+  second_surname: 'Smith',
+  email: 'test@example.com',
+  phone_number: '123456789',
+  birthdate: new Date('1990-01-01'),
+  password: await (async () => await bcrypt.hash('password', 10))(),
+  created_at: new Date(),
+  updated_at: new Date(),
+  status: 'active',
+  userRoles: [
+    {
+      role: {
+        role_id: 1,
+        role_name: 'User',
+        created_at: new Date(),
+        updated_at: new Date(),
+      },
+      user_id: 1,
+      role_id: 1,
+      created_at: new Date(),
+      updated_at: new Date(),
+    },
+  ],
+};
+
 describe('AuthService', () => {
   let service: AuthService;
   let usersService: UserService;
@@ -40,33 +70,6 @@ describe('AuthService', () => {
   });
 
   it('should validate and return a user when credentials are valid', async () => {
-    const mockUser = {
-      user_id: 1,
-      first_name: 'John',
-      middle_name: 'A',
-      first_surname: 'Doe',
-      second_surname: 'Smith',
-      email: 'test@example.com',
-      phone_number: '123456789',
-      birthdate: new Date('1990-01-01'),
-      password: await bcrypt.hash('password', 10),
-      created_at: new Date(),
-      updated_at: new Date(),
-      userRoles: [
-        {
-          role: {
-            role_id: 1,
-            role_name: 'User',
-            created_at: new Date(),
-            updated_at: new Date(),
-          },
-          user_id: 1,
-          role_id: 1,
-          created_at: new Date(),
-          updated_at: new Date(),
-        },
-      ],
-    };
     jest.spyOn(usersService, 'findUserByEmail').mockResolvedValue(mockUser);
 
     const result = await service.validateUser('test@example.com', 'password');
@@ -74,36 +77,9 @@ describe('AuthService', () => {
   });
 
   it('should throw an UnauthorizedException if credentials are invalid', async () => {
-    const mockUser = {
-      user_id: 1,
-      first_name: 'John',
-      middle_name: 'A',
-      first_surname: 'Doe',
-      second_surname: 'Smith',
-      email: 'test@example.com',
-      phone_number: '123456789',
-      birthdate: new Date('1990-01-01'),
-      password: await bcrypt.hash('password', 10),
-      created_at: new Date(),
-      updated_at: new Date(),
-      userRoles: [
-        {
-          role: {
-            role_id: 1,
-            role_name: 'User',
-            created_at: new Date(),
-            updated_at: new Date(),
-          },
-          user_id: 1,
-          role_id: 1,
-          created_at: new Date(),
-          updated_at: new Date(),
-        },
-      ],
-    };
     jest.spyOn(usersService, 'findUserByEmail').mockResolvedValue(mockUser);
 
-    await expect(service.validateUser('test@example.com', 'wrongpassword')).rejects.toThrow();
+    await expect(service.validateUser('test@example.com', 'wrong password')).rejects.toThrow();
   });
 
   it('should generate a JWT when login is successful', async () => {

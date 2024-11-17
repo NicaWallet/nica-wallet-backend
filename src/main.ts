@@ -1,42 +1,47 @@
-import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
-import { ValidationPipe } from '@nestjs/common';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { PrismaService } from './prisma/prisma.service';
-import { Response } from 'express';
-import { env } from 'process';
-
+import { NestFactory } from "@nestjs/core";
+import { AppModule } from "./app.module";
+import { ValidationPipe } from "@nestjs/common";
+import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
+import { PrismaService } from "./prisma/prisma.service";
+import { Response } from "express";
+import { env } from "process";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  app.setGlobalPrefix('api');
+  app.setGlobalPrefix("api");
 
   // Habilitar CORS para localhost y un dominio futuro
   app.enableCors({
-    origin: env.CORS_ALLOWED_ORIGINS.split(',').map(origin => origin.trim()),
-    methods: env.CORS_ALLOWED_METHODS.split(',').map(method => method.trim()),
-    allowedHeaders: env.CORS_ALLOWED_HEADERS.split(',').map(header => header.trim()),
+    origin: env.CORS_ALLOWED_ORIGINS.split(",").map(origin => origin.trim()),
+    methods: env.CORS_ALLOWED_METHODS.split(",").map(method => method.trim()),
+    allowedHeaders: env.CORS_ALLOWED_HEADERS.split(",").map(header => header.trim()),
     credentials: true,
   });
 
-  // Usar un ValidationPipe global para validaciones automáticas de DTOs
-  app.useGlobalPipes(new ValidationPipe());
+  // Usar un ValidationPipe global para validaciones automáticas de DTO
+  app.useGlobalPipes(
+    new ValidationPipe({
+      transform: false,
+      whitelist: true,
+      forbidNonWhitelisted: true,
+    }),
+  );
 
   // Configuración de Swagger
   const config = new DocumentBuilder()
-    .setTitle('NicaWallet API')
-    .setDescription('API para la gestión de finanzas personales - NicaWallet')
-    .setVersion('1.0')
+    .setTitle("NicaWallet API")
+    .setDescription("API para la gestión de finanzas personales - NicaWallet")
+    .setVersion("1.0")
     .addBearerAuth()
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api/docs', app, document);
+  SwaggerModule.setup("api/docs", app, document);
 
   // Middleware para redirigir desde la raíz a la documentación de Swagger
-  app.use('/', (req: { path: string }, res: Response, next: () => void) => {
-    if (req.path === '/') {
+  app.use("/", (req: { path: string }, res: Response, next: () => void) => {
+    if (req.path === "/") {
       res.send(`
       <!DOCTYPE html>
       <html lang="es">
@@ -98,4 +103,7 @@ async function bootstrap() {
   // Escuchar en el puerto 3000
   await app.listen(process.env.PORT || 3000);
 }
-bootstrap();
+
+bootstrap()
+  .then(() => console.log("NicaWallet API running!"))
+  .catch(err => console.error("ERROR:", err));

@@ -1,13 +1,14 @@
 import { Controller, Get, Param, UseGuards } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { RolesGuard } from 'src/auth/roles.guard';
 import { RoleService } from './role.service';
 import { Roles } from 'src/auth/roles.decorator';
 
-@ApiTags('role')
+@ApiTags('Role')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('role')
+@ApiBearerAuth()
 export class RoleController {
     constructor(private readonly roleService: RoleService) { }
 
