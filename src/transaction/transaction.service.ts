@@ -269,4 +269,34 @@ export class TransactionService {
       transaction: updatedTransaction,
     };
   }
+
+  /**
+   * Deletes a transaction if the user is the owner.
+   * @param transactionId - The ID of the transaction to delete.
+   * @param userId - The ID of the user attempting the deletion.
+   * @returns A confirmation message on successful deletion.
+   * @throws NotFoundException if the transaction does not exist.
+   * @throws ForbiddenException if the user is not the owner of the transaction.
+   */
+  async deleteTransaction(transactionId: number, userId: number) {
+    const transaction = await this.prisma.transaction.findUnique({
+      where: { transaction_id: transactionId },
+    });
+
+    if (!transaction) {
+      throw new NotFoundException(`Transaction with ID ${transactionId} not found`);
+    }
+
+    if (transaction.user_id !== userId) {
+      throw new ForbiddenException(`You do not have permission to delete this transaction`);
+    }
+
+    await this.prisma.transaction.delete({
+      where: { transaction_id: transactionId },
+    });
+
+    return {
+      message: "Transaction deleted successfully",
+    };
+  }
 }

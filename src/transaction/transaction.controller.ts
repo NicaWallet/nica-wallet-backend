@@ -7,6 +7,7 @@ import { IAuthenticatedRequest } from "../interfaces/auth/authenticated-request.
 import { Roles } from "../auth/roles.decorator";
 import { CreateTransactionDto } from "./dto/create-transaction.dto";
 import { UpdateTransactionDto } from "./dto/ update-transaction.dto";
+import { CustomParseIntPipe } from "../pipes/custom-parse-int.pipe";
 
 @ApiTags("Transaction")
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -64,5 +65,18 @@ export class TransactionController {
   async updateTransaction(@Param("transaction_id", ParseIntPipe) transactionId: number, @Req() req: IAuthenticatedRequest, @Body() updateTransactionDto: UpdateTransactionDto) {
     const userId = req.user.userId; // Obtiene el userId del token decodificado
     return this.transactionService.updateTransaction(transactionId, userId, updateTransactionDto);
+  }
+
+  @Delete(":transaction_id")
+  @ApiOperation({
+    summary: "Delete an existing transaction",
+    description: "Allows the authenticated user to delete a transaction they own.",
+  })
+  @ApiResponse({ status: 200, description: "Transaction deleted successfully." })
+  @ApiResponse({ status: 403, description: "Forbidden: User is not the owner of the transaction" })
+  @ApiResponse({ status: 404, description: "Transaction not found" })
+  async deleteTransaction(@Param("transaction_id", CustomParseIntPipe) transactionId: number, @Req() req: IAuthenticatedRequest) {
+    const userId = req.user.userId; // Obtiene el userId del token decodificado
+    return this.transactionService.deleteTransaction(transactionId, userId);
   }
 }
