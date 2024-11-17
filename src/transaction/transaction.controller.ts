@@ -6,6 +6,7 @@ import { ApiOperation, ApiResponse, ApiTags, ApiBearerAuth } from "@nestjs/swagg
 import { IAuthenticatedRequest } from "../interfaces/auth/authenticated-request.interface";
 import { Roles } from "../auth/roles.decorator";
 import { CreateTransactionDto } from "./dto/create-transaction.dto";
+import { UpdateTransactionDto } from "./dto/ update-transaction.dto";
 
 @ApiTags("Transaction")
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -49,5 +50,19 @@ export class TransactionController {
   async createTransaction(@Req() req: IAuthenticatedRequest, @Body() createTransactionDto: CreateTransactionDto) {
     const userId = req.user.userId;
     return this.transactionService.createTransaction(userId, createTransactionDto);
+  }
+
+  @Put(":transaction_id")
+  @ApiOperation({
+    summary: "Update an existing transaction",
+    description: "Allows the authenticated user to update any field of a transaction they own.",
+  })
+  @ApiResponse({ status: 200, description: "Transaction updated successfully." })
+  @ApiResponse({ status: 400, description: "Bad Request" })
+  @ApiResponse({ status: 403, description: "Forbidden: User is not the owner of the transaction" })
+  @ApiResponse({ status: 404, description: "Transaction not found" })
+  async updateTransaction(@Param("transaction_id", ParseIntPipe) transactionId: number, @Req() req: IAuthenticatedRequest, @Body() updateTransactionDto: UpdateTransactionDto) {
+    const userId = req.user.userId; // Obtiene el userId del token decodificado
+    return this.transactionService.updateTransaction(transactionId, userId, updateTransactionDto);
   }
 }

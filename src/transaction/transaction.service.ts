@@ -1,7 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { CreateTransactionDto } from "./dto/create-transaction.dto";
 import { Prisma } from "@prisma/client";
+import { UpdateTransactionDto } from "./dto/ update-transaction.dto";
 
 @Injectable()
 export class TransactionService {
@@ -203,6 +204,69 @@ export class TransactionService {
     return {
       message: "Transaction created successfully",
       transaction,
+    };
+  }
+
+  /**
+   * Updates a transaction if the user is the owner.
+   * @param transactionId - The ID of the transaction to update.
+   * @param userId - The ID of the user attempting the update.
+   * @param updateTransactionDto - DTO containing the updated data.
+   * @returns The updated transaction.
+   * @throws NotFoundException if the transaction does not exist.
+   * @throws ForbiddenException if the user is not the owner of the transaction.
+   */
+  async updateTransaction(transactionId: number, userId: number, updateTransactionDto: UpdateTransactionDto) {
+    const transaction = await this.prisma.transaction.findUnique({
+      where: { transaction_id: transactionId },
+    });
+
+    if (!transaction) {
+      throw new NotFoundException(`Transaction with ID ${transactionId} not found`);
+    }
+
+    if (transaction.user_id !== userId) {
+      throw new ForbiddenException(`You do not have permission to update this transaction`);
+    }
+
+    // Validaciones opcionales de entidades relacionadas
+    if (updateTransactionDto.category_id) {
+      const category = await this.prisma.category.findUnique({ where: { category_id: updateTransactionDto.category_id } });
+      if (!category) {
+        throw new NotFoundException(`Category with ID ${updateTransactionDto.category_id} not found`);
+      }
+    }
+
+    if (updateTransactionDto.subcategory_id) {
+      const subcategory = await this.prisma.subcategory.findUnique({ where: { subcategory_id: updateTransactionDto.subcategory_id } });
+      if (!subcategory) {
+        throw new NotFoundException(`Subcategory with ID ${updateTransactionDto.subcategory_id} not found`);
+      }
+    }
+
+    if (updateTransactionDto.classification_id) {
+      const classification = await this.prisma.classification.findUnique({ where: { classification_id: updateTransactionDto.classification_id } });
+      if (!classification) {
+        throw new NotFoundException(`Classification with ID ${updateTransactionDto.classification_id} not found`);
+      }
+    }
+
+    // Verifica si el campo `date` se debe actualizar
+    if (updateTransactionDto.date && isNaN(Date.parse(updateTransactionDto.date))) {
+      throw new BadRequestException("Invalid date format");
+    }
+
+    const updatedTransaction = await this.prisma.transaction.update({
+      where: { transaction_id: transactionId },
+      data: {
+        ...updateTransactionDto,
+        date: updateTransactionDto.date ? new Date(updateTransactionDto.date) : undefined,
+      },
+    });
+
+    return {
+      message: "Transaction updated successfully",
+      transaction: updatedTransaction,
     };
   }
 }
