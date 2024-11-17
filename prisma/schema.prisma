@@ -20,6 +20,9 @@ model User {
   password       String?
   created_at     DateTime  @default(now())
   updated_at     DateTime  @updatedAt
+  status         String    @default("active")
+  // last_login     DateTime? // TODO: Implementar en el futuro
+  // last_logout    DateTime? // TODO: Implementar en el futuro
 
   // Relaciones
   addresses             Address[]
@@ -139,14 +142,14 @@ model RecurringTransactions {
 }
 
 model UserConnectionLog {
-  connection_id Int      @id @default(autoincrement())
+  connection_id Int       @id @default(autoincrement())
   user_id       Int
   login_time    DateTime
   logout_time   DateTime?
   ip_address    String
   device_info   String
-  created_at    DateTime @default(now())
-  updated_at    DateTime @updatedAt
+  created_at    DateTime  @default(now())
+  updated_at    DateTime  @updatedAt
 
   // Relations
   user User @relation(fields: [user_id], references: [user_id])
