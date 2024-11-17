@@ -29,7 +29,7 @@ export class AddressController {
     ) {
         const pageValue = page ?? 1;
         const limitValue = limit ?? 10;
-        return this.addressService.getAdressByUserId(+userId, { page: pageValue, limit: limitValue, all });
+        return this.addressService.getAddressByUserId(+userId, { page: pageValue, limit: limitValue, all });
     }
 
     // Get all addresses

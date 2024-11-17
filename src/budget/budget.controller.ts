@@ -26,10 +26,11 @@ export class BudgetController {
   }
 
   // Find all budgets by user id
-  @Get("user/:id")
+  @Get("user")
   @ApiOperation({ summary: "Get all budgets by user id" })
   @ApiResponse({ status: 200, description: "List of all budgets by user id." })
-  findAllByUserId(@Param("id", ParseIntPipe) userId: number, @Req() req: IAuthenticatedRequest) {
+  findAllByUserId(@Req() req: IAuthenticatedRequest) {
+    const userId = req.user.userId;
     // console.log(`Fetching budgets for user ID: ${userId}`);
     return this.BudgetService.findAllByUserId(userId);
   }
