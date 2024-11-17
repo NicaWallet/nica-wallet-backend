@@ -224,6 +224,18 @@ export class TransactionService {
       } as Prisma.TransactionUncheckedCreateInput,
     });
 
+    // Guardar el historial de creación
+    await this.prisma.history.create({
+      data: {
+        change_date: new Date(),
+        old_value: "N/A", // No hay valor anterior
+        new_value: JSON.stringify(transaction),
+        transaction: {
+          connect: { transaction_id: transaction.transaction_id },
+        },
+      } as Prisma.HistoryCreateInput,
+    });
+
     return {
       message: "Transaction created successfully",
       transaction,
@@ -287,6 +299,18 @@ export class TransactionService {
       },
     });
 
+    // Guardar el historial de actualización
+    await this.prisma.history.create({
+      data: {
+        change_date: new Date(),
+        old_value: JSON.stringify(transaction),
+        new_value: JSON.stringify(updatedTransaction),
+        transaction: {
+          connect: { transaction_id: transaction.transaction_id },
+        },
+      } as Prisma.HistoryCreateInput,
+    });
+
     return {
       message: "Transaction updated successfully",
       transaction: updatedTransaction,
@@ -314,6 +338,12 @@ export class TransactionService {
       throw new ForbiddenException(`You do not have permission to delete this transaction`);
     }
 
+    // Eliminar todos los registros de historial relacionados con la transacción
+    await this.prisma.history.deleteMany({
+      where: { transaction_id: transactionId },
+    });
+
+    // Eliminar la transacción
     await this.prisma.transaction.delete({
       where: { transaction_id: transactionId },
     });
@@ -346,5 +376,30 @@ export class TransactionService {
     }
 
     return transaction;
+  }
+
+  // Método para obtener el historial de una transacción
+  async getTransactionHistory(transactionId: number, userId: number) {
+    const transaction = await this.prisma.transaction.findUnique({
+      where: { transaction_id: transactionId },
+    });
+
+    if (!transaction) {
+      throw new NotFoundException(`Transaction with ID ${transactionId} not found`);
+    }
+
+    if (transaction.user_id !== userId) {
+      throw new ForbiddenException(`You do not have permission to access this transaction history`);
+    }
+
+    const history = await this.prisma.history.findMany({
+      where: { transaction_id: transactionId },
+      orderBy: { change_date: "desc" },
+    });
+
+    return {
+      transactionId,
+      history,
+    };
   }
 }
