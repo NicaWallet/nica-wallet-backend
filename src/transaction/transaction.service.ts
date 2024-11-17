@@ -1,5 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
+import { CreateTransactionDto } from "./dto/create-transaction.dto";
+import { Prisma } from "@prisma/client";
 
 @Injectable()
 export class TransactionService {
@@ -155,5 +157,52 @@ export class TransactionService {
       console.error("Error in findAllByUserId service:", error);
       throw new BadRequestException("Failed to fetch transactions");
     }
+  }
+
+  /**
+   * Creates a new transaction associated with the given user ID.
+   * Validates the existence of the category, subcategory, and classification.
+   * @param userId - The ID of the user creating the transaction.
+   * @param createTransactionDto - DTO containing transaction data.
+   * @returns An object with a success message and transaction details.
+   * @throws NotFoundException if any of the related entities are not found.
+   */
+  async createTransaction(userId: number, createTransactionDto: CreateTransactionDto) {
+    const { category_id, subcategory_id, classification_id, amount } = createTransactionDto;
+
+    // Validar la existencia de la categoría
+    const category = await this.prisma.category.findUnique({ where: { category_id } });
+    if (!category) {
+      throw new NotFoundException(`Category with ID ${category_id} not found`);
+    }
+
+    // Validar la existencia de la subcategoría
+    const subcategory = await this.prisma.subcategory.findUnique({ where: { subcategory_id } });
+    if (!subcategory) {
+      throw new NotFoundException(`Subcategory with ID ${subcategory_id} not found`);
+    }
+
+    // Validar la existencia de la clasificación
+    const classification = await this.prisma.classification.findUnique({ where: { classification_id } });
+    if (!classification) {
+      throw new NotFoundException(`Classification with ID ${classification_id} not found`);
+    }
+
+    // Crear la transacción
+    const transaction = await this.prisma.transaction.create({
+      data: {
+        user_id: userId, // Obtiene el user_id del token
+        amount,
+        category_id,
+        subcategory_id,
+        classification_id,
+        date: new Date(), // Incluye la fecha si es necesaria
+      } as Prisma.TransactionUncheckedCreateInput,
+    });
+
+    return {
+      message: "Transaction created successfully",
+      transaction,
+    };
   }
 }
