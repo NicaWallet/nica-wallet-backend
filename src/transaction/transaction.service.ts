@@ -6,62 +6,7 @@ import { UpdateTransactionDto } from "./dto/ update-transaction.dto";
 
 @Injectable()
 export class TransactionService {
-  constructor(private readonly prisma: PrismaService) {}
-
-  // Configuración común para el `include`, excluyendo la relación `user`
-  private readonly baseIncludeOptions = {
-    category: {
-      select: {
-        category_id: true,
-        name: true,
-        subcategories: {
-          select: {
-            subcategory_id: true,
-            name: true,
-          },
-        },
-      },
-    },
-    histories: {
-      select: {
-        history_id: true,
-        created_at: true,
-        transaction_id: true,
-        updated_at: true,
-        change_date: true,
-        new_value: true,
-        old_value: true,
-      },
-    },
-    classification: {
-      select: {
-        classification_id: true,
-        name: true,
-      },
-    },
-  };
-
-  // Configuración para `findAll`, que incluye la relación `user`
-  private readonly includeOptionsWithUser = {
-    ...this.baseIncludeOptions,
-    user: {
-      select: {
-        user_id: true,
-        first_name: true,
-        first_surname: true,
-        email: true,
-        userRoles: {
-          select: {
-            role: {
-              select: {
-                role_name: true,
-              },
-            },
-          },
-        },
-      },
-    },
-  };
+  constructor(private readonly prisma: PrismaService) { }
 
   // Find all transactions with pagination and optional full retrieval
   async findAll(paginationOptions: { page?: number; limit?: number; all?: boolean }) {
@@ -70,7 +15,13 @@ export class TransactionService {
 
       if (all || (!page && !limit)) {
         const data = await this.prisma.transaction.findMany({
-          include: this.includeOptionsWithUser,
+          include: {
+            category: true,
+            subcategory: true,
+            classification: true,
+            histories: true,
+            user: true
+          },
         });
 
         const total = data.length;
@@ -87,7 +38,13 @@ export class TransactionService {
       const data = await this.prisma.transaction.findMany({
         skip,
         take: currentLimit,
-        include: this.includeOptionsWithUser,
+        include: {
+          category: true,
+          subcategory: true,
+          classification: true,
+          histories: true,
+          user: true
+        },
       });
 
       const total = await this.prisma.transaction.count();
@@ -185,14 +142,14 @@ export class TransactionService {
 
   /**
    * Creates a new transaction associated with the given user ID.
-   * Validates the existence of the category, subcategory, and classification.
+   * Validates the existence of the category, subcategory, classification, and optional recurring transaction.
    * @param userId - The ID of the user creating the transaction.
    * @param createTransactionDto - DTO containing transaction data.
    * @returns An object with a success message and transaction details.
    * @throws NotFoundException if any of the related entities are not found.
    */
   async createTransaction(userId: number, createTransactionDto: CreateTransactionDto) {
-    const { category_id, subcategory_id, classification_id, amount } = createTransactionDto;
+    const { category_id, subcategory_id, classification_id, recurring_transaction_id, amount, type } = createTransactionDto;
 
     // Validar la existencia de la categoría
     const category = await this.prisma.category.findUnique({ where: { category_id } });
@@ -212,15 +169,25 @@ export class TransactionService {
       throw new NotFoundException(`Classification with ID ${classification_id} not found`);
     }
 
+    // Validar la existencia de la transacción recurrente (si se proporciona)
+    if (recurring_transaction_id) {
+      const recurringTransaction = await this.prisma.recurringTransactions.findUnique({ where: { recurring_transaction_id } });
+      if (!recurringTransaction) {
+        throw new NotFoundException(`Recurring transaction with ID ${recurring_transaction_id} not found`);
+      }
+    }
+
     // Crear la transacción
     const transaction = await this.prisma.transaction.create({
       data: {
-        user_id: userId, // Obtiene el user_id del token
+        user_id: userId,
         amount,
         category_id,
         subcategory_id,
         classification_id,
-        date: new Date(), // Incluye la fecha si es necesaria
+        recurring_transaction_id,
+        type,
+        date: new Date(),
       } as Prisma.TransactionUncheckedCreateInput,
     });
 
@@ -233,7 +200,7 @@ export class TransactionService {
         transaction: {
           connect: { transaction_id: transaction.transaction_id },
         },
-      } as Prisma.HistoryCreateInput,
+      },
     });
 
     return {
@@ -244,11 +211,12 @@ export class TransactionService {
 
   /**
    * Updates a transaction if the user is the owner.
+   * Validates the existence of related entities if provided in the update DTO.
    * @param transactionId - The ID of the transaction to update.
    * @param userId - The ID of the user attempting the update.
    * @param updateTransactionDto - DTO containing the updated data.
    * @returns The updated transaction.
-   * @throws NotFoundException if the transaction does not exist.
+   * @throws NotFoundException if the transaction or related entities do not exist.
    * @throws ForbiddenException if the user is not the owner of the transaction.
    */
   async updateTransaction(transactionId: number, userId: number, updateTransactionDto: UpdateTransactionDto) {
@@ -286,6 +254,13 @@ export class TransactionService {
       }
     }
 
+    if (updateTransactionDto.recurring_transaction_id) {
+      const recurringTransaction = await this.prisma.recurringTransactions.findUnique({ where: { recurring_transaction_id: updateTransactionDto.recurring_transaction_id } });
+      if (!recurringTransaction) {
+        throw new NotFoundException(`Recurring transaction with ID ${updateTransactionDto.recurring_transaction_id} not found`);
+      }
+    }
+
     // Verifica si el campo `date` se debe actualizar
     if (updateTransactionDto.date && isNaN(Date.parse(updateTransactionDto.date))) {
       throw new BadRequestException("Invalid date format");
@@ -308,7 +283,7 @@ export class TransactionService {
         transaction: {
           connect: { transaction_id: transaction.transaction_id },
         },
-      } as Prisma.HistoryCreateInput,
+      },
     });
 
     return {
@@ -316,6 +291,7 @@ export class TransactionService {
       transaction: updatedTransaction,
     };
   }
+
 
   /**
    * Deletes a transaction if the user is the owner.
@@ -364,7 +340,12 @@ export class TransactionService {
   async getTransactionDetails(transactionId: number, userId: number) {
     const transaction = await this.prisma.transaction.findUnique({
       where: { transaction_id: transactionId },
-      include: this.includeOptionsWithUser, // Utiliza la configuración existente
+      include: {
+        category: true,
+        subcategory: true,
+        classification: true,
+        histories: true,
+      },
     });
 
     if (!transaction) {
