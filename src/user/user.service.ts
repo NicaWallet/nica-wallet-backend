@@ -5,6 +5,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 
 @Injectable()
 export class UserService {
+
   constructor(private readonly prisma: PrismaService) { }
 
   // Método para validar al usuario con email y contraseña
@@ -109,6 +110,12 @@ export class UserService {
     return user;
   }
 
+  async findOneUserIncludePassword(id: number) {
+    return this.prisma.user.findUnique({
+      where: { user_id: id },
+    });
+  }
+
   async getUserPermissions(userId: number) {
     const userRoles = await this.prisma.userRole.findMany({
       where: { user_id: userId },
@@ -131,89 +138,12 @@ export class UserService {
 
     return permissions;
   }
-  // TODO: Implementar servicio para Cambiar la contraseña
-  // async changePassword(userId: number, newPassword: string) {
-  //   const hashedPassword = await bcrypt.hash(newPassword, 10);
-  //   return this.prisma.user.update({
-  //     where: { id: userId },
-  //     data: { password: hashedPassword },
-  //   });
-  // }
 
+  async updatePassword(userId: number, hashedPassword: string) {
+    return this.prisma.user.update({
+      where: { user_id: userId },
+      data: { password: hashedPassword },
+    });
+  }
 
-  // TODO: Implementar servicio para Confirmar el correo electrónico
-  // async confirmEmail(userId: number) {
-  //   return this.prisma.user.update({
-  //     where: { id: userId },
-  //     data: { emailConfirmed: true },
-  //   });
-  // }
-
-
-  // TODO: Implementar servicio para  Verificar el código de 2FA
-  // async verifyTwoFactorCode(userId: number, code: string): Promise<boolean> {
-  //   const user = await this.prisma.user.findUnique({
-  //     where: { id: userId },
-  //   });
-
-  //   // Aquí puedes agregar la lógica para verificar el código 2FA.
-  //   // Ejemplo: si el código es correcto, retorna true, si no, retorna false.
-  //   return user.twoFactorCode === code;
-  // }
-
-  // TODO: Implementar servicio para  Actualizar un usuario
-  // async findAll() {
-  //   return this.prisma.user.findMany();
-  // }
-
-
-  // TODO: Implementar servicio para  Buscar un usuario por ID
-  // async findOne(id: number) {
-  //   const user = await this.prisma.user.findUnique({
-  //     where: { id },
-  //   });
-  //   if (!user) {
-  //     throw new NotFoundException(`User with ID ${id} not found`);
-  //   }
-  //   return user;
-  // }
-
-
-  // TODO: Implementar servicio para  Actualizar un usuario
-  // async update(id: number, updateUserDto: UpdateUserDto) {
-  //   const user = await this.prisma.user.update({
-  //     where: { id },
-  //     data: updateUserDto,
-  //   });
-  //   return user;
-  // }
-
-
-  // TODO: Implementar servicio para  Eliminar un usuario
-  // async remove(id: number, currentUserId: number) {
-  //   const user = await this.prisma.user.findUnique({
-  //     where: { user_id: id },
-  //     select: { role_name: true },
-  //   });
-
-  //   if (!user) {
-  //     return { message: `User with ID ${id} not found` };
-  //   }
-
-  //   const isAdmin = user.role_name === 'Admin';
-
-  //   if (!isAdmin) {
-  //     return { message: `User with ID ${id} is not an admin and cannot delete users` };
-  //   }
-
-  //   if (id === currentUserId) {
-  //     return { message: `User cannot delete their own account` };
-  //   }
-
-  //   await this.prisma.user.delete({
-  //     where: { user_id: id },
-  //   });
-
-  //   return { message: `User with ID ${id} deleted` };
-  // }
 }

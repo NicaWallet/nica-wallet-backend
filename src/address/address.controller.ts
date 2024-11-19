@@ -1,13 +1,14 @@
 import { Controller, Get, Param, Query, Patch, Body, Delete, UseGuards } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags, ApiQuery } from '@nestjs/swagger';
+import { ApiOperation, ApiResponse, ApiTags, ApiQuery, ApiBearerAuth } from "@nestjs/swagger";
 import { AddressService } from './address.service';
 import { PermissionsGuard } from '../permission/permissions.guard'; // Importar el Guard
-import { Permission } from '../permission/permission.decorator'; // Importar el decorador
+import { Permission } from '../permission/permission.decorator';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
-@ApiTags('address')
+@ApiTags('Address')
 @Controller('address')
-@UseGuards(JwtAuthGuard, PermissionsGuard) // Aplicar el Guard a nivel de controlador
+@UseGuards(JwtAuthGuard, PermissionsGuard)
+@ApiBearerAuth()
 export class AddressController {
     constructor(private readonly addressService: AddressService) { }
 
@@ -28,7 +29,7 @@ export class AddressController {
     ) {
         const pageValue = page ?? 1;
         const limitValue = limit ?? 10;
-        return this.addressService.getAdressByUserId(+userId, { page: pageValue, limit: limitValue, all });
+        return this.addressService.getAddressByUserId(+userId, { page: pageValue, limit: limitValue, all });
     }
 
     // Get all addresses

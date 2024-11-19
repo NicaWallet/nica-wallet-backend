@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, RequestMethod } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { AddressModule } from './address/address.module';
 import { AppController } from './app.controller';
@@ -26,6 +26,7 @@ import { UserChangeHistoryModule } from './user-change-history/user-change-histo
 import { UserConnectionLogModule } from './user-connection-log/user-connection-log.module';
 import { UserRoleModule } from './user-role/user-role.module';
 import { UserModule } from './user/user.module';
+import { ActivityMiddleware } from './auth/activity.middleware';
 
 
 @Module({
@@ -59,4 +60,16 @@ import { UserModule } from './user/user.module';
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule { }
+
+export class AppModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(ActivityMiddleware)
+      .exclude(
+        { path: 'auth/login', method: RequestMethod.POST },
+        { path: 'auth/register', method: RequestMethod.POST },
+        { path: 'auth/forgot-password', method: RequestMethod.POST },
+      )
+      .forRoutes({ path: '*', method: RequestMethod.ALL });
+  }
+}

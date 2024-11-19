@@ -6,7 +6,7 @@ export class AddressService {
     constructor(private readonly prisma: PrismaService) { }
 
     // Servicio que maneja la obtención de direcciones
-    async getAdressByUserId(userId: number, paginationOptions: any) {
+    async getAddressByUserId(userId: number, paginationOptions: any) {
         const { page, limit, all } = paginationOptions;
 
         if (all) {
