@@ -1,5 +1,10 @@
-import { IsInt, IsNumber, IsPositive, IsNotEmpty } from "class-validator";
+import { IsInt, IsNumber, IsPositive, IsNotEmpty, IsOptional, IsEnum } from "class-validator";
 import { ApiProperty } from "@nestjs/swagger";
+
+enum TransactionType {
+  INCOME = 'INCOME',
+  EXPENSE = 'EXPENSE',
+}
 
 export class CreateTransactionDto {
   @ApiProperty({
@@ -33,4 +38,21 @@ export class CreateTransactionDto {
   @IsInt()
   @IsNotEmpty()
   classification_id: number;
+
+  @ApiProperty({
+    description: "The ID of the recurring transaction",
+    example: 4,
+    required: false,
+  })
+  @IsInt()
+  @IsOptional()
+  recurring_transaction_id?: number;
+
+  @ApiProperty({
+    description: "The type of the transaction",
+    example: TransactionType.INCOME,
+  })
+  @IsEnum(TransactionType)
+  @IsNotEmpty()
+  type: TransactionType;
 }
