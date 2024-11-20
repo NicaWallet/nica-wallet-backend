@@ -39,7 +39,8 @@ model User {
   preferences           Preference[]
   userRoles             UserRole[]
 
-  Category Category[]
+  Category    Category[]
+  Subcategory Subcategory[]
 }
 
 model Address {
@@ -138,7 +139,8 @@ model RecurringTransactions {
   updated_at               DateTime @updatedAt
 
   // Relations
-  user User @relation(fields: [user_id], references: [user_id])
+  user         User          @relation(fields: [user_id], references: [user_id])
+  transactions Transaction[] // Relación con las transacciones generadas
 }
 
 model UserConnectionLog {
@@ -240,34 +242,42 @@ model RolePermission {
   @@id([role_id, permission_id])
 }
 
-model Transaction {
-  transaction_id    Int      @id @default(autoincrement())
-  user_id           Int
-  category_id       Int
-  subcategory_id    Int
-  classification_id Int
-  amount            Float
-  date              DateTime
-  created_at        DateTime @default(now())
-  updated_at        DateTime @updatedAt
+enum TransactionType {
+  INCOME
+  EXPENSE
+}
 
-  // Relations
-  user           User           @relation(fields: [user_id], references: [user_id])
-  category       Category       @relation(fields: [category_id], references: [category_id])
-  subcategory    Subcategory    @relation(fields: [subcategory_id], references: [subcategory_id])
-  classification Classification @relation(fields: [classification_id], references: [classification_id])
-  histories      History[]
+model Transaction {
+  transaction_id           Int             @id @default(autoincrement())
+  user_id                  Int
+  category_id              Int
+  subcategory_id           Int
+  classification_id        Int
+  recurring_transaction_id Int? // Campo agregado
+  type                     TransactionType // Enum para distinguir entre ingreso/egreso
+  amount                   Float
+  date                     DateTime
+  created_at               DateTime        @default(now())
+  updated_at               DateTime        @updatedAt
+
+  // Relaciones
+  user                 User                   @relation(fields: [user_id], references: [user_id])
+  category             Category               @relation(fields: [category_id], references: [category_id])
+  subcategory          Subcategory            @relation(fields: [subcategory_id], references: [subcategory_id])
+  classification       Classification         @relation(fields: [classification_id], references: [classification_id])
+  recurringTransaction RecurringTransactions? @relation(fields: [recurring_transaction_id], references: [recurring_transaction_id])
+  histories            History[]
 }
 
 model Category {
   category_id Int      @id @default(autoincrement())
   name        String
-  user_id     Int
+  user_id     Int? // Puede ser null para categorías compartidas
   created_at  DateTime @default(now())
   updated_at  DateTime @updatedAt
 
   // Relations
-  user          User          @relation(fields: [user_id], references: [user_id])
+  user          User?         @relation(fields: [user_id], references: [user_id])
   subcategories Subcategory[]
   Budget        Budget[]
   Transaction   Transaction[]
@@ -277,11 +287,13 @@ model Subcategory {
   subcategory_id Int      @id @default(autoincrement())
   name           String
   category_id    Int
+  user_id        Int? // Puede ser null para subcategorías compartidas
   created_at     DateTime @default(now())
   updated_at     DateTime @updatedAt
 
   // Relations
   category    Category      @relation(fields: [category_id], references: [category_id])
+  user        User?         @relation(fields: [user_id], references: [user_id])
   Transaction Transaction[]
 }
 
