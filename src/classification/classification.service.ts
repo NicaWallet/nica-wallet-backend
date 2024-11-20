@@ -18,6 +18,7 @@ export class ClassificationService {
       },
       include: {
         Transaction: true, // Incluye las transacciones relacionadas
+        _count: true
       },
     });
   }
@@ -27,7 +28,9 @@ export class ClassificationService {
       {
         include: {
           Transaction: true,
+          _count: true
         },
+        
       },
     );
   }
@@ -45,6 +48,7 @@ export class ClassificationService {
             }
           },
         },
+        _count: true
       },
     });
 
