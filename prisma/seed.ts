@@ -195,6 +195,7 @@ async function main() {
                 category_id: groceriesCategory.category_id,
                 subcategory_id: foodSubcategory.subcategory_id,
                 classification_id: essentialClassification.classification_id,
+                type: 'INCOME'
             },
             {
                 amount: 50.0,
@@ -203,6 +204,7 @@ async function main() {
                 category_id: entertainmentCategory.category_id,
                 subcategory_id: movieSubcategory.subcategory_id,
                 classification_id: nonEssentialClassification.classification_id,
+                type: 'INCOME'
             },
         ],
     });

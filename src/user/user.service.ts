@@ -140,13 +140,10 @@ export class UserService {
             recurringTransactions: true,
             Category: true,
             Subcategory: true,
-          },
-        },
-        // Devuelve solo las últimas 5 transacciones ordenadas por fecha
-        transactions: {
-          take: 5,
-          orderBy: {
-            date: 'desc', // Ordena por la fecha más reciente
+            transactions: true,
+            notifications: {
+              where: { read: false },
+            }
           },
         },
       },
