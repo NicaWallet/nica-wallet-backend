@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -77,8 +77,69 @@ export class UserService {
     return users;
   }
 
-  // GetUserById
-  async findOne(id: number) {
+  // Get user by ID (profile)
+  async findOne(id: number, isAdmin: boolean) {
+
+    const TakeFiveAndOrderByDesc = {
+      take: 5,
+      orderBy: {
+        created_at: 'desc' as const,
+      },
+    };
+
+    if (isAdmin) {
+      const user = await this.prisma.user.findUnique({
+        where: { user_id: id },
+        select: {
+          user_id: true,
+          first_name: true,
+          middle_name: true,
+          first_surname: true,
+          second_surname: true,
+          email: true,
+          phone_number: true,
+          birthdate: true,
+          created_at: true,
+          updated_at: true,
+          status: true,
+          userRoles: TakeFiveAndOrderByDesc,
+          addresses: TakeFiveAndOrderByDesc,
+          billingInfos: TakeFiveAndOrderByDesc,
+          bankDetails: TakeFiveAndOrderByDesc,
+          budgets: TakeFiveAndOrderByDesc,
+          goals: TakeFiveAndOrderByDesc,
+          incomes: TakeFiveAndOrderByDesc,
+          recurringTransactions: TakeFiveAndOrderByDesc,
+          notifications: TakeFiveAndOrderByDesc,
+          preferences: true,
+          Category: TakeFiveAndOrderByDesc,
+          Subcategory: TakeFiveAndOrderByDesc,
+          transactions: TakeFiveAndOrderByDesc,
+          _count: {
+            select: {
+              addresses: true,
+              budgets: true,
+              goals: true,
+              recurringTransactions: true,
+              Category: true,
+              Subcategory: true,
+              transactions: true,
+              notifications: {
+                where: { read: false },
+              }
+            },
+          },
+        },
+      });
+
+      if (!user) {
+        throw new NotFoundException(`User with ID ${id} not found`);
+      }
+
+      return user;
+    }
+
+    // Si el usuario no es admin, devuelve solo los conteos
     const user = await this.prisma.user.findUnique({
       where: { user_id: id },
       select: {
@@ -88,25 +149,31 @@ export class UserService {
         first_surname: true,
         second_surname: true,
         email: true,
-        phone_number: true,
-        birthdate: true,
-        created_at: true,
+        status: true,
         updated_at: true,
-        userRoles: {
+        created_at: true,
+        phone_number: true,
+        _count: {
           select: {
-            role: {
-              select: {
-                role_name: true,
-              },
-            },
+            addresses: true,
+            budgets: true,
+            goals: true,
+            recurringTransactions: true,
+            Category: true,
+            Subcategory: true,
+            transactions: true,
+            notifications: {
+              where: { read: false },
+            }
           },
         },
       },
     });
+
     if (!user) {
-      const message = { message: `User with ID ${id} not found` };
-      return message
+      throw new NotFoundException(`User with ID ${id} not found`);
     }
+
     return user;
   }
 
@@ -146,4 +213,27 @@ export class UserService {
     });
   }
 
+  async changePassword(userId: number, currentPassword: string, newPassword: string) {
+    const user = await this.findOneUserIncludePassword(userId);
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const isCurrentPasswordValid = await bcrypt.compare(currentPassword, user.password);
+    if (!isCurrentPasswordValid) {
+      throw new UnauthorizedException('Current password is incorrect');
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    return this.updatePassword(userId, hashedPassword);
+  }
+
+  async updateUserProfile(userId: number, updateData: Partial<CreateUserDto>) {
+    return this.prisma.user.update({
+      where: { user_id: userId },
+      data: updateData,
+    });
+  }
 }

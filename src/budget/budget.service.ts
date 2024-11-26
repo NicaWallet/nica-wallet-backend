@@ -5,7 +5,7 @@ import { UpdateBudgetDto } from "./dto/update-budget.dto";
 
 @Injectable()
 export class BudgetService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   // Servicio para obtener todos los presupuestos
   async findAll() {
@@ -54,6 +54,9 @@ export class BudgetService {
       orderBy: {
         created_at: "desc",
       },
+      include: {
+        category: true,
+      }
     });
 
     if (!budgets.length) {
