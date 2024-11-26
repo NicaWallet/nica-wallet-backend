@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Put, Req, UseGuards, ForbiddenException } from "@nestjs/common";
+import { Body, Controller, Get, Param, Post, Put, Req, UseGuards, ForbiddenException, InternalServerErrorException } from "@nestjs/common";
 import { ClassificationService } from "./classification.service";
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
 import { JwtAuthGuard } from "../auth/jwt-auth.guard";
@@ -14,14 +14,25 @@ import { Roles } from "src/auth/roles.decorator";
 @ApiBearerAuth()
 @Controller("classification")
 export class ClassificationController {
-  constructor(private readonly classificationService: ClassificationService) { }
+  constructor(private readonly classificationService: ClassificationService) {}
 
   @Get()
   @ApiOperation({ summary: "Get all classifications for the logged-in user based on their transactions" })
   @ApiResponse({ status: 200, description: "List of classifications related to the user's transactions" })
   async getAllClassifications(@Req() req: IAuthenticatedRequest) {
     const userId = req.user.userId;
-    return this.classificationService.getClassificationsAndTransactionsForUser(userId);
+
+    console.log("User ID:", userId);
+    console.log("User:", req.user);
+
+    try {
+      const classifications = await this.classificationService.getClassificationsAndTransactionsForUser(userId);
+      console.log("Classifications:", classifications);
+      return classifications;
+    } catch (error) {
+      console.error("Error fetching classifications:", error);
+      throw new InternalServerErrorException("Failed to fetch classifications and transactions.");
+    }
   }
 
   @Get("admin")
@@ -50,11 +61,14 @@ export class ClassificationController {
   @Put(":classification_id")
   @ApiOperation({ summary: "Update a classification" })
   @ApiResponse({ status: 200, description: "Classification updated" })
-  @ApiResponse({ status: 403, description: "Forbidden: User does not own the transaction related to this classification" })
+  @ApiResponse({
+    status: 403,
+    description: "Forbidden: User does not own the transaction related to this classification",
+  })
   async updateClassification(
     @Param("classification_id", CustomParseIntPipe) classificationId: number,
     @Body() updateClassificationDto: UpdateClassificationDTO,
-    @Req() req: IAuthenticatedRequest
+    @Req() req: IAuthenticatedRequest,
   ) {
     const userId = req.user.userId;
     const canUpdate = await this.classificationService.canUserUpdateClassification(classificationId, userId);

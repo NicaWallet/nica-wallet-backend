@@ -8,6 +8,7 @@ import { Roles } from "../auth/roles.decorator";
 import { CreateTransactionDto } from "./dto/create-transaction.dto";
 import { UpdateTransactionDto } from "./dto/ update-transaction.dto";
 import { CustomParseIntPipe } from "../pipes/custom-parse-int.pipe";
+import { TransactionQueryDto } from "../auth/dto/transaction-queary.dto";
 
 @ApiTags("Transaction")
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -32,12 +33,15 @@ export class TransactionController {
   @Get("user")
   @ApiOperation({ summary: "Get all transactions by user id" })
   @ApiResponse({ status: 200, description: "List of all transactions by user logged in." })
-  async findAllByUserId(@Req() req: IAuthenticatedRequest, @Query("page") page?: number, @Query("limit") limit?: number, @Query("all") all: boolean = false) {
+  async findAllByUserId(@Req() req: IAuthenticatedRequest, @Query() query: TransactionQueryDto) {
     const userId = req.user.userId;
-    if (!page && !limit) {
-      all = true; // Si no se envían page y limit, se establece `all` en true
-    }
-    return this.transactionService.findAllByUserId(userId, { page, limit, all });
+
+    const { page, limit, all } = query;
+
+    // Si no hay paginación, devuelve todo
+    const allTransactions = !page && !limit ? true : all;
+
+    return this.transactionService.findAllByUserId(userId, { page, limit, all: allTransactions });
   }
 
   @Post()

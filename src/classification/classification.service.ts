@@ -5,34 +5,40 @@ import { UpdateClassificationDTO } from "./dto/update-classification.dto";
 
 @Injectable()
 export class ClassificationService {
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(private readonly prisma: PrismaService) {}
 
   async getClassificationsAndTransactionsForUser(userId: number) {
     return this.prisma.classification.findMany({
       where: {
-        Transaction: {
-          some: {
-            user_id: userId,
+        OR: [
+          {
+            Transaction: {
+              some: {
+                user_id: userId, // Clasificaciones con transacciones del usuario
+              },
+            },
           },
-        },
+          {
+            Transaction: {
+              none: {}, // Clasificaciones sin ninguna transacción
+            },
+          },
+        ],
       },
       include: {
-        Transaction: true, // Incluye las transacciones relacionadas
-        _count: true
+        Transaction: true, // Incluye las transacciones relacionadas (si las hay)
+        _count: true, // Incluye el conteo de transacciones
       },
     });
   }
 
   async getAllClassifications() {
-    return this.prisma.classification.findMany(
-      {
-        include: {
-          Transaction: true,
-          _count: true
-        },
-        
+    return this.prisma.classification.findMany({
+      include: {
+        Transaction: true,
+        _count: true,
       },
-    );
+    });
   }
 
   async getOneClassification(classificationId: number) {
@@ -43,12 +49,12 @@ export class ClassificationService {
           include: {
             category: {
               include: {
-                subcategories: true
-              }
-            }
+                subcategories: true,
+              },
+            },
           },
         },
-        _count: true
+        _count: true,
       },
     });
 
@@ -75,7 +81,7 @@ export class ClassificationService {
     });
 
     return {
-      message: 'Classification created successfully',
+      message: "Classification created successfully",
       classification_id: classification.classification_id,
     };
   }
@@ -123,7 +129,7 @@ export class ClassificationService {
     });
 
     return {
-      message: 'Classification updated successfully',
+      message: "Classification updated successfully",
       classification_id: updatedClassification.classification_id,
     };
   }

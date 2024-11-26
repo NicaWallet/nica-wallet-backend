@@ -6,7 +6,7 @@ import { UpdateTransactionDto } from "./dto/ update-transaction.dto";
 
 @Injectable()
 export class TransactionService {
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(private readonly prisma: PrismaService) {}
 
   // Find all transactions with pagination and optional full retrieval
   async findAll(paginationOptions: { page?: number; limit?: number; all?: boolean }) {
@@ -20,7 +20,7 @@ export class TransactionService {
             subcategory: true,
             classification: true,
             histories: true,
-            user: true
+            user: true,
           },
         });
 
@@ -43,7 +43,7 @@ export class TransactionService {
           subcategory: true,
           classification: true,
           histories: true,
-          user: true
+          user: true,
         },
       });
 
@@ -71,39 +71,28 @@ export class TransactionService {
         transaction_id: true,
         amount: true,
         date: true,
-        category: {
-          select: {
-            name: true,
-          },
-        },
-        subcategory: {
-          select: {
-            name: true,
-          },
-        },
-        classification: {
-          select: {
-            name: true,
-          },
-        },
+        category: { select: { name: true } },
+        subcategory: { select: { name: true } },
+        classification: { select: { name: true } },
         created_at: true,
         updated_at: true,
+        type: true,
       };
 
       if (all || (!page && !limit)) {
         const transactions = await this.prisma.transaction.findMany({
-          where: {
-            user_id: userId,
-          },
+          where: { user_id: userId },
           select: selectFields,
         });
 
         const total = transactions.length;
-        if (!transactions.length) throw new NotFoundException(`No transactions found for user ID ${userId}`);
-        return {
-          data: transactions,
-          total,
-        };
+
+        // Maneja el caso donde no se encuentran transacciones
+        if (total === 0) {
+          throw new NotFoundException(`No transactions found for user ID ${userId}`);
+        }
+
+        return { data: transactions, total };
       }
 
       const currentPage = page || 1;
@@ -111,21 +100,20 @@ export class TransactionService {
       const skip = (currentPage - 1) * currentLimit;
 
       const transactions = await this.prisma.transaction.findMany({
-        where: {
-          user_id: userId,
-        },
+        where: { user_id: userId },
         skip,
         take: currentLimit,
         select: selectFields,
       });
 
       const total = await this.prisma.transaction.count({
-        where: {
-          user_id: userId,
-        },
+        where: { user_id: userId },
       });
 
-      if (!transactions.length) throw new NotFoundException(`No transactions found for user ID ${userId}`);
+      // Maneja el caso donde no se encuentran transacciones con paginación
+      if (transactions.length === 0) {
+        throw new NotFoundException(`No transactions found for user ID ${userId}`);
+      }
 
       return {
         data: transactions,
@@ -136,6 +124,11 @@ export class TransactionService {
       };
     } catch (error) {
       console.error("Error in findAllByUserId service:", error);
+
+      // Propaga un error de acuerdo a la naturaleza del problema
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
       throw new BadRequestException("Failed to fetch transactions");
     }
   }
@@ -291,7 +284,6 @@ export class TransactionService {
       transaction: updatedTransaction,
     };
   }
-
 
   /**
    * Deletes a transaction if the user is the owner.
