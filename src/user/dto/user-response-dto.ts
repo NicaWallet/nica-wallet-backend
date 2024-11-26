@@ -93,12 +93,12 @@ export class UserResponseDto {
     @ApiProperty({ description: 'Date when the user was created', example: '2024-10-02T16:31:10.374Z' })
     @IsOptional()
     @IsDateString()
-    created_at?: string;
+    created_at?: Date;
 
     @ApiProperty({ description: 'Date when the user was last updated', example: '2024-10-02T16:31:10.374Z' })
     @IsOptional()
     @IsDateString()
-    updated_at?: string;
+    updated_at?: Date;
 
     @ApiProperty({
         description: 'Roles associated with the user',
